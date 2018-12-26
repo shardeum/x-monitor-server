@@ -63,6 +63,17 @@ app.use((req, res, next) => {
   return next(error);
 });
 
+app.use((err, req, res, next) =>
+  res.status(err.status || 500).json({
+    error: {
+      message: err.message,
+      status: err.status,
+      stack: CONFIG.env === 'development' ? err.stack : {}
+    },
+    status: err.status
+  })
+);
+
 const start = () => {
   app.listen(CONFIG.port, (err) => {
     if (err) {
