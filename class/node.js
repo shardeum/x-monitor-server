@@ -24,6 +24,10 @@ class Node {
   heartbeat(nodeId, data) {
     this.nodes.active[nodeId] = data;
   }
+
+  report() {
+    return this.nodes;
+  }
 }
 
 module.exports = Node;
