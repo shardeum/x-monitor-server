@@ -1,6 +1,10 @@
 class Node {
   constructor() {
-    this.nodes = {
+    this.nodes = this._createEmptyNodelist()
+  }
+
+  _createEmptyNodelist() {
+    return {
       joining: {},
       syncing: {},
       active: {}
@@ -27,6 +31,10 @@ class Node {
 
   report() {
     return this.nodes;
+  }
+  
+  flush() {
+    this.nodes = this._createEmptyNodelist()
   }
 }
 
