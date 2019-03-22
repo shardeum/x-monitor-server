@@ -25,6 +25,10 @@ class Node {
     this.nodes.active[nodeId] = {};
   }
 
+  removed(nodeId) {
+    delete this.nodes.active[nodeId];
+  }
+
   heartbeat(nodeId, data) {
     this.nodes.active[nodeId] = data;
   }
