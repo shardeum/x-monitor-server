@@ -12,6 +12,9 @@
   },
   "author": "Shardus",
   "license": "ISC",
+  "bin": {
+    "monitor-server": "./bin/monitor-server"
+  },
   "dependencies": {
     "body-parser": "1.18.3",
     "compression": "1.7.3",
