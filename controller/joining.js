@@ -1,7 +1,8 @@
 const joining = (req, res, next) => {
-  let publicKey = req.body.publicKey;
+  const publicKey = req.body.publicKey;
+  const nodeIpInfo = req.body.nodeIpInfo;
   let Node = global.node;
-  Node.joining(publicKey);
+  Node.joining(publicKey, nodeIpInfo);
   let resp = {
     received: true
   }

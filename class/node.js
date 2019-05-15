@@ -11,13 +11,13 @@ class Node {
     }
   }
 
-  joining(publicKey) {
-    this.nodes.joining[publicKey] = true;
+  joining(publicKey, nodeIpInfo) {
+    this.nodes.joining[publicKey] = { nodeIpInfo };
   }
 
-  joined(publicKey, nodeId) {
+  joined(publicKey, nodeId, nodeIpInfo) {
     delete this.nodes.joining[publicKey];
-    this.nodes.syncing[nodeId] = publicKey;
+    this.nodes.syncing[nodeId] = { publicKey, nodeIpInfo };
   }
 
   active(nodeId) {
