@@ -54,6 +54,8 @@ app.use(helmet());
 
 app.use(cors());
 
+app.use(express.static('./node_modules/monitor-client/'))
+
 app.use('/api', APIRoutes);
 
 // catch 404 and forward to error handler
