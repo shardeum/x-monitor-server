@@ -18,6 +18,9 @@ const APIRoutes = require('./api');
 
 // config variables
 const CONFIG = require('./config');
+if (process.argv[2] === '-p' && process.argv[3]) {
+  CONFIG.port = process.argv[3]
+}
 
 //Express
 const app = express();
