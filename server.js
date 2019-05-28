@@ -57,8 +57,7 @@ app.use(helmet());
 
 app.use(cors());
 
-app.use(express.static(require.resolve('monitor-client')))
-
+app.use('/', express.static(path.dirname(require.resolve('monitor-client'))))
 app.use('/api', APIRoutes);
 
 // catch 404 and forward to error handler
