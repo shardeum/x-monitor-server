@@ -39,7 +39,7 @@ class Node {
     this.totalTxInjected += data.txInjected
     this.totalTxRejected += data.txRejected
     this.totalTxExpired += data.txExpired
-    this.avgApplied = Math.round((this.weight * (this.avgApplied + (data.txApplied / data.reportInterval))) / (this.weight + 1))
+    this.avgApplied = Math.round((this.weight * this.avgApplied + (data.txApplied / data.reportInterval)) / (this.weight + 1))
   }
 
   report() {
