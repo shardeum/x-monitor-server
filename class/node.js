@@ -1,15 +1,14 @@
 class Node {
-  constructor() {
+  constructor () {
     this.totalTxInjected = 0
     this.totalTxRejected = 0
     this.totalTxExpired = 0
     this.weight = 5
     this.avgApplied = 0
-    this.activeLength = 0
     this.nodes = this._createEmptyNodelist()
   }
 
-  _createEmptyNodelist() {
+  _createEmptyNodelist () {
     return {
       joining: {},
       syncing: {},
@@ -17,27 +16,25 @@ class Node {
     }
   }
 
-  joining(publicKey, nodeIpInfo) {
-    this.nodes.joining[publicKey] = { nodeIpInfo };
+  joining (publicKey, nodeIpInfo) {
+    this.nodes.joining[publicKey] = { nodeIpInfo }
   }
 
-  joined(publicKey, nodeId, nodeIpInfo) {
-    delete this.nodes.joining[publicKey];
-    this.nodes.syncing[nodeId] = { publicKey, nodeIpInfo };
+  joined (publicKey, nodeId, nodeIpInfo) {
+    delete this.nodes.joining[publicKey]
+    this.nodes.syncing[nodeId] = { publicKey, nodeIpInfo }
   }
 
-  active(nodeId) {
-    delete this.nodes.syncing[nodeId];
-    this.nodes.active[nodeId] = {};
-    this.activeLength++
+  active (nodeId) {
+    delete this.nodes.syncing[nodeId]
+    this.nodes.active[nodeId] = {}
   }
 
-  removed(nodeId) {
-    delete this.nodes.active[nodeId];
-    this.activeLength--
+  removed (nodeId) {
+    delete this.nodes.active[nodeId]
   }
 
-  heartbeat(nodeId, data) {
+  heartbeat (nodeId, data) {
     this.nodes.active[nodeId] = data
     this.totalTxInjected += data.txInjected
     this.totalTxRejected += data.txRejected
@@ -46,14 +43,14 @@ class Node {
     // if (data.partitionsCovered === 0) {
     //   partitionFactor = 1
     // } else {
-    //   partitionFactor = data.partitions / data.partitionsCovered 
+    //   partitionFactor = data.partitions / data.partitionsCovered
     // }
     // this.avgApplied = Math.round((this.weight * this.avgApplied + (data.txApplied * partitionFactor / data.reportInterval)) / (this.weight + 1))
-    this.avgApplied += (data.txInjected - data.txRejected - data.txExpired) / (this.activeLength || 1)
+    this.avgApplied += (data.txInjected - data.txRejected - data.txExpired)
   }
 
-  report() {
-    return { 
+  report () {
+    return {
       nodes: this.nodes,
       totalInjected: this.totalTxInjected,
       totalRejected: this.totalTxRejected,
@@ -61,8 +58,8 @@ class Node {
       avgApplied: this.avgApplied
     }
   }
-  
-  flush() {
+
+  flush () {
     this.nodes = this._createEmptyNodelist()
     this.totalTxInjected = 0
     this.totalTxRejected = 0
@@ -71,4 +68,4 @@ class Node {
   }
 }
 
-module.exports = Node;
+module.exports = Node
