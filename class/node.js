@@ -39,7 +39,13 @@ class Node {
     this.totalTxInjected += data.txInjected
     this.totalTxRejected += data.txRejected
     this.totalTxExpired += data.txExpired
-    this.avgApplied = Math.round((this.weight * this.avgApplied + (data.txApplied / data.reportInterval)) / (this.weight + 1))
+    let partitionFactor
+    if (data.partitionsCovered === 0) {
+      partitionFactor = 1
+    } else {
+      partitionFactor = data.partitions / data.partitionsCovered 
+    }
+    this.avgApplied = Math.round((this.weight * this.avgApplied + (data.txApplied * partitionFactor / data.reportInterval)) / (this.weight + 1))
   }
 
   report() {
