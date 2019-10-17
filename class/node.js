@@ -35,17 +35,18 @@ class Node {
   }
 
   heartbeat(nodeId, data) {
-    this.nodes.active[nodeId] = data;
+    this.nodes.active[nodeId] = data
     this.totalTxInjected += data.txInjected
     this.totalTxRejected += data.txRejected
     this.totalTxExpired += data.txExpired
-    let partitionFactor
-    if (data.partitionsCovered === 0) {
-      partitionFactor = 1
-    } else {
-      partitionFactor = data.partitions / data.partitionsCovered 
-    }
-    this.avgApplied = Math.round((this.weight * this.avgApplied + (data.txApplied * partitionFactor / data.reportInterval)) / (this.weight + 1))
+    // let partitionFactor
+    // if (data.partitionsCovered === 0) {
+    //   partitionFactor = 1
+    // } else {
+    //   partitionFactor = data.partitions / data.partitionsCovered 
+    // }
+    // this.avgApplied = Math.round((this.weight * this.avgApplied + (data.txApplied * partitionFactor / data.reportInterval)) / (this.weight + 1))
+    this.avgApplied += this.totalTxInjected - this.totalTxRejected - this.totalTxExpired
   }
 
   report() {
@@ -55,7 +56,7 @@ class Node {
       totalRejected: this.totalTxRejected,
       totalExpired: this.totalTxExpired,
       avgApplied: this.avgApplied
-    };
+    }
   }
   
   flush() {
