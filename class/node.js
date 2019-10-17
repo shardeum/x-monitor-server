@@ -5,6 +5,7 @@ class Node {
     this.totalTxExpired = 0
     this.weight = 5
     this.avgApplied = 0
+    this.activeLength = 0
     this.nodes = this._createEmptyNodelist()
   }
 
@@ -28,10 +29,12 @@ class Node {
   active(nodeId) {
     delete this.nodes.syncing[nodeId];
     this.nodes.active[nodeId] = {};
+    this.activeLength++
   }
 
   removed(nodeId) {
     delete this.nodes.active[nodeId];
+    this.activeLength--
   }
 
   heartbeat(nodeId, data) {
@@ -46,7 +49,7 @@ class Node {
     //   partitionFactor = data.partitions / data.partitionsCovered 
     // }
     // this.avgApplied = Math.round((this.weight * this.avgApplied + (data.txApplied * partitionFactor / data.reportInterval)) / (this.weight + 1))
-    this.avgApplied += this.totalTxInjected - this.totalTxRejected - this.totalTxExpired
+    this.avgApplied += (data.totalTxInjected - data.totalTxRejected - data.totalTxExpired) / (this.activeLength || 1)
   }
 
   report() {
