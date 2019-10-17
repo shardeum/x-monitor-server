@@ -1,6 +1,6 @@
-const fs = require('fs')
-const path = require('path')
-const writeStream = fs.createWriteStream(path.join('.', 'node-reports.json'))
+// const fs = require('fs')
+// const path = require('path')
+// const writeStream = fs.createWriteStream(path.join('.', 'node-reports.json'))
 
 class Node {
   constructor () {
@@ -8,7 +8,9 @@ class Node {
     this.totalTxRejected = 0
     this.totalTxExpired = 0
     this.weight = 5
-    this.avgApplied = 0
+    this.totalApplied = 0
+    this.avgTps = 0
+    this.maxTps = 0
     this.nodes = this._createEmptyNodelist()
   }
 
@@ -43,16 +45,17 @@ class Node {
     this.totalTxInjected += data.txInjected
     this.totalTxRejected += data.txRejected
     this.totalTxExpired += data.txExpired
-    // let partitionFactor
-    // if (data.partitionsCovered === 0) {
-    //   partitionFactor = 1
-    // } else {
-    //   partitionFactor = data.partitions / data.partitionsCovered
-    // }
-    // this.avgApplied = Math.round((this.weight * this.avgApplied + (data.txApplied * partitionFactor / data.reportInterval)) / (this.weight + 1))
+    let partitionFactor
+    if (data.partitionsCovered === 0) {
+      partitionFactor = 1
+    } else {
+      partitionFactor = data.partitions / data.partitionsCovered
+    }
+    this.avgTps = Math.round((this.weight * this.avgTps + (data.txApplied * partitionFactor / data.reportInterval)) / (this.weight + 1))
+    if (this.avgTps > this.maxTps) this.maxTps = this.avgTps
     // this.avgApplied += (data.txInjected - data.txRejected - data.txExpired)
-    this.avgApplied += data.txInjected
-    writeStream.write(JSON.stringify(this.nodes.active[nodeId], null, 2) + '\n')
+    this.totalApplied += data.txInjected
+    // writeStream.write(JSON.stringify(this.nodes.active[nodeId], null, 2) + '\n')
   }
 
   report () {
@@ -61,7 +64,9 @@ class Node {
       totalInjected: this.totalTxInjected,
       totalRejected: this.totalTxRejected,
       totalExpired: this.totalTxExpired,
-      avgApplied: this.avgApplied
+      totalApplied: this.totalApplied,
+      avgTps: this.avgTps,
+      maxTps: this.maxTps
     }
   }
 
