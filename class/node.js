@@ -49,7 +49,7 @@ class Node {
     //   partitionFactor = data.partitions / data.partitionsCovered 
     // }
     // this.avgApplied = Math.round((this.weight * this.avgApplied + (data.txApplied * partitionFactor / data.reportInterval)) / (this.weight + 1))
-    this.avgApplied += (data.totalTxInjected - data.totalTxRejected - data.totalTxExpired) / (this.activeLength || 1)
+    this.avgApplied += (data.txInjected - data.txRejected - data.txExpired) / (this.activeLength || 1)
   }
 
   report() {
