@@ -1,3 +1,7 @@
+const fs = require('fs')
+const path = require('path')
+const writeStream = fs.createWriteStream(path.join('.', 'node-reports.json'))
+
 class Node {
   constructor () {
     this.totalTxInjected = 0
@@ -46,7 +50,9 @@ class Node {
     //   partitionFactor = data.partitions / data.partitionsCovered
     // }
     // this.avgApplied = Math.round((this.weight * this.avgApplied + (data.txApplied * partitionFactor / data.reportInterval)) / (this.weight + 1))
-    this.avgApplied += (data.txInjected - data.txRejected - data.txExpired)
+    // this.avgApplied += (data.txInjected - data.txRejected - data.txExpired)
+    this.avgApplied += data.txInjected
+    writeStream.write(JSON.stringify(this.nodes.active[nodeId], null, 2) + '\n')
   }
 
   report () {
