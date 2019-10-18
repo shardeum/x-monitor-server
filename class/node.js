@@ -69,7 +69,8 @@ class Node {
       totalApplied: this.totalApplied,
       totalProcessed: this.totalProcessed,
       avgTps: this.avgTps,
-      maxTps: this.maxTps
+      maxTps: this.maxTps,
+      timestamp: Date.now()
     }
   }
 
