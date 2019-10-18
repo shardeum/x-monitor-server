@@ -7,11 +7,7 @@ class Node {
     this.totalTxInjected = 0
     this.totalTxRejected = 0
     this.totalTxExpired = 0
-    this.weight = 5
-    this.totalApplied = 0
     this.totalProcessed = 0;
-    this.avgTps = 0
-    this.maxTps = 0
     this.nodes = this._createEmptyNodelist()
   }
 
@@ -46,17 +42,8 @@ class Node {
     this.totalTxInjected += data.txInjected
     this.totalTxRejected += data.txRejected
     this.totalTxExpired += data.txExpired
-    let partitionFactor
-    if (data.partitionsCovered === 0) {
-      partitionFactor = 1
-    } else {
-      partitionFactor = data.partitions / data.partitionsCovered
-    }
     this.totalProcessed += data.txProcessed
-    this.avgTps = Math.round((this.weight * this.avgTps + (data.txApplied * partitionFactor / data.reportInterval)) / (this.weight + 1))
-    if (this.avgTps > this.maxTps) this.maxTps = this.avgTps
     // this.avgApplied += (data.txInjected - data.txRejected - data.txExpired)
-    this.totalApplied += data.txInjected
     // writeStream.write(JSON.stringify(this.nodes.active[nodeId], null, 2) + '\n')
   }
 
@@ -66,10 +53,7 @@ class Node {
       totalInjected: this.totalTxInjected,
       totalRejected: this.totalTxRejected,
       totalExpired: this.totalTxExpired,
-      totalApplied: this.totalApplied,
       totalProcessed: this.totalProcessed,
-      avgTps: this.avgTps,
-      maxTps: this.maxTps,
       timestamp: Date.now()
     }
   }
@@ -79,10 +63,7 @@ class Node {
     this.totalTxInjected = 0
     this.totalTxRejected = 0
     this.totalTxExpired = 0
-    this.totalApplied = 0;
     this.totalProcessed = 0
-    this.avgApplied = 0
-    this.maxTps = 0
   }
 }
 
