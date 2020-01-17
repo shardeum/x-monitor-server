@@ -4,7 +4,8 @@
   "description": "Monitor server for the Shardus Enterprise server.",
   "main": "server.js",
   "scripts": {
-    "start": "node ."
+    "start": "node .",
+    "update-docker": "docker build -t registry.gitlab.com/shardus/monitor-server . && docker push registry.gitlab.com/shardus/monitor-server"
   },
   "repository": {
     "type": "git",
