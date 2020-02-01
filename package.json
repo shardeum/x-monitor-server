@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/shardus/enterprise/monitor-server.git"
+    "url": "https://gitlab.com/shardus/monitor-server.git"
   },
   "author": "Shardus",
   "license": "ISC",
