@@ -7,7 +7,7 @@ class Node {
     this.totalTxInjected = 0
     this.totalTxRejected = 0
     this.totalTxExpired = 0
-    this.totalProcessed = 0;
+    this.totalProcessed = 0
     this.nodes = this._createEmptyNodelist()
   }
 
@@ -39,6 +39,7 @@ class Node {
 
   heartbeat (nodeId, data) {
     this.nodes.active[nodeId] = data
+    this.nodes.active[nodeId].timestamp = Date.now()
     this.totalTxInjected += data.txInjected
     this.totalTxRejected += data.txRejected
     this.totalTxExpired += data.txExpired
