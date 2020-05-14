@@ -61,10 +61,10 @@ class Node {
 
   flush () {
     this.nodes = this._createEmptyNodelist()
-    this.totalTxInjected = 0
-    this.totalTxRejected = 0
-    this.totalTxExpired = 0
-    this.totalProcessed = 0
+    // this.totalTxInjected = 0
+    // this.totalTxRejected = 0
+    // this.totalTxExpired = 0
+    // this.totalProcessed = 0
   }
 }
 
