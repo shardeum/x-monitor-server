@@ -113,7 +113,8 @@ wss.on('connection', function connection (ws) {
   ws.on('message', function incoming (data) {
     let { node, slot } = JSON.parse(data)
     console.log('Requested log: ', node)
-    const filePath = `../server/instances/shardus-instance-${node.port}/logs/${node.filename}.log`
+    console.log('resolved file path', path.resolve(`../../instances/shardus-instance-${node.port}/logs/${node.filename}.log`))
+    const filePath = path.resolve(`../instances/shardus-instance-${node.port}/logs/${node.filename}.log`)
     if (socketConnections[slot]) {
       console.log('Unwatching previous log file...')
       socketConnections[slot].unwatch()
