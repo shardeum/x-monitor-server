@@ -1,6 +1,6 @@
 {
   "name": "monitor-server",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Monitor server for the Shardus Enterprise server.",
   "main": "server.js",
   "scripts": {
