@@ -1,5 +1,5 @@
 # Node.js LTS 10.x.x from Docker Hub
-FROM node:10
+FROM node:12
 
 # Create app directory
 WORKDIR /usr/src/app
