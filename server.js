@@ -83,6 +83,41 @@ app.get('/log', (req, res) => {
   console.log('log server page')
   res.render('log.html', {title: 'test'});
 })
+
+// Node totals summary view for monitoring large networks
+app.get('/summary', (req, res) => {
+  const summary = {
+    joining: 0,
+    syncing: 0,
+    active: 0
+  }
+
+  for (const key in global.node.nodes.joining) summary.joining++
+  for (const key in global.node.nodes.syncing) summary.syncing++
+  for (const key in global.node.nodes.active) summary.active++
+
+  const page = `<!DOCTYPE html>
+<html>
+  <body>
+    joining: ${summary.joining}</br>
+    syncing: ${summary.syncing}</br>
+    active: ${summary.active}</br>
+  </body>
+
+  <script>
+    setInterval(() => {
+      console.log('reload')
+      window.location.reload(true)
+    }, 5000)
+  </script> 
+</html>
+`
+
+  res.setHeader('Content-Type', 'text/html')
+  res.send(page)
+})
+
+
 app.use('/api', APIRoutes);
 
 // catch 404 and forward to error handler
@@ -163,13 +198,6 @@ app.get('/logs', (req, res) => {
       res.send('Not found')
     }
   })
-})
-
-app.get('/', (req, res) => {
-  var data = fs.readFileSync('./client/index.html')
-  res.writeHead(200, { 'Content-Type': 'text/html' })
-  res.write(data)
-  res.end()
 })
 
 const start = () => {
