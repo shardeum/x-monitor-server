@@ -143,7 +143,7 @@ app.get('/summary', async (req, res) => {
     for (const id in global.node.nodes[state]) {
       const ip = global.node.nodes[state][id].nodeIpInfo.externalIp
       const logStreamerServer = encodeURIComponent(`http://${ip}:3334`)
-      summary[state].push(`<a href="log2#server=${logStreamerServer}" target="_blank">[${ip}]</a>`)
+      summary[state].push(`<a href="log2?server=${logStreamerServer}" target="_blank">[${ip}]</a>`)
     }
   }
 
