@@ -115,14 +115,16 @@ app.get('/log2', (req, res) => {
 app.get('/summary', async (req, res) => {
   // Ping a node for the current cycle
   let cycle = {}
+  let cycleUrl
+  let configUrl
 
   const joining = global.node.nodes['joining'] // { [id: string]: { nodeIpInfo: {...} } }
   const syncing = global.node.nodes['syncing'] // { [id: string]: { nodeIpInfo: {...} } }
   const active = global.node.nodes['active'] // { [id: string]: { nodeIpInfo: {...} } }
   const node = Object.values(active)[0] || Object.values(syncing)[0] || Object.values(joining)[0]
-  const cycleUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/sync-newest-cycle`
-  const configUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/config`
   if (node) {
+    cycleUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/sync-newest-cycle`
+    configUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/config`
     try {
       cycle = await getJSON(cycleUrl)
       cycle = cycle.newestCycle
@@ -148,7 +150,7 @@ app.get('/summary', async (req, res) => {
   const page = `<!DOCTYPE html>
 <html>
   <body>
-    cycle: ${cycle && (cycle.counter > -1) ? cycle.counter : -1}
+    cycle: ${cycle && cycle.counter > -1 ? cycle.counter : -1}
       <br />
       <br />
     joining: ${summary.joining.length}
