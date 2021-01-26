@@ -223,28 +223,30 @@ const wss = new WebSocket.Server({ server })
 let socketConnections = {}
 
 wss.on('connection', function connection(ws) {
-  ws.on('message', function incoming(data) {
-    let { node, slot } = JSON.parse(data)
-    console.log('Requested log: ', node)
-    console.log('resolved file path', path.resolve(`../../instances/shardus-instance-${node.port}/logs/${node.filename}.log`))
-    const filePath = path.resolve(`../instances/shardus-instance-${node.port}/logs/${node.filename}.log`)
-    if (socketConnections[slot]) {
-      console.log('Unwatching previous log file...')
-      socketConnections[slot].unwatch()
-      socketConnections[slot] = null
-    }
-    socketConnections[slot] = new Tail(filePath, { fromBeginning: false })
-    socketConnections[slot].watch()
-    socketConnections[slot].on('line', (data) => {
-      // console.log(`New data detected. Slot`, slot, node.port, node.filename)
-      ws.send(
-        JSON.stringify({
-          slot: slot,
-          data: '\n' + data,
-        })
-      )
-    })
-  })
+  // [AS] Disabled to not crash Monitor when running non-local nodes
+
+  // ws.on('message', function incoming(data) {
+  //   let { node, slot } = JSON.parse(data)
+  //   console.log('Requested log: ', node)
+  //   console.log('resolved file path', path.resolve(`../../instances/shardus-instance-${node.port}/logs/${node.filename}.log`))
+  //   const filePath = path.resolve(`../instances/shardus-instance-${node.port}/logs/${node.filename}.log`)
+  //   if (socketConnections[slot]) {
+  //     console.log('Unwatching previous log file...')
+  //     socketConnections[slot].unwatch()
+  //     socketConnections[slot] = null
+  //   }
+  //   socketConnections[slot] = new Tail(filePath, { fromBeginning: false })
+  //   socketConnections[slot].watch()
+  //   socketConnections[slot].on('line', (data) => {
+  //     // console.log(`New data detected. Slot`, slot, node.port, node.filename)
+  //     ws.send(
+  //       JSON.stringify({
+  //         slot: slot,
+  //         data: '\n' + data,
+  //       })
+  //     )
+  //   })
+  // })
 })
 
 server.listen(8080, (err) => {
@@ -253,30 +255,31 @@ server.listen(8080, (err) => {
 })
 
 // HTTP server for searching string in a log file
-app.get('/logs', (req, res) => {
-  const fileName = req.query.filename
-  const queryString = req.query.search
-  if (!fileName) return res.json({ error: 'No log filename provided' })
-  if (!queryString) return res.json({ error: 'No queryString provided' })
-  const filePath = `./logs/${fileName}.log`
-  const stream = fs.createReadStream(filePath)
-  let foundTextArr = []
-  stream.on('data', function (buffer) {
-    const text = buffer.toString()
-    let index = text.indexOf(queryString)
-    if (index >= 0) {
-      foundTextArr.push(text.substr(index, 300))
-    }
-  })
-  stream.on('end', function (buffer) {
-    if (foundTextArr.length > 0) {
-      res.json(foundTextArr)
-    } else {
-      console.log('Not found')
-      res.send('Not found')
-    }
-  })
-})
+// [AS] Disabled to not crash Monitor when running non-local nodes
+// app.get('/logs', (req, res) => {
+//   const fileName = req.query.filename
+//   const queryString = req.query.search
+//   if (!fileName) return res.json({ error: 'No log filename provided' })
+//   if (!queryString) return res.json({ error: 'No queryString provided' })
+//   const filePath = `./logs/${fileName}.log`
+//   const stream = fs.createReadStream(filePath)
+//   let foundTextArr = []
+//   stream.on('data', function (buffer) {
+//     const text = buffer.toString()
+//     let index = text.indexOf(queryString)
+//     if (index >= 0) {
+//       foundTextArr.push(text.substr(index, 300))
+//     }
+//   })
+//   stream.on('end', function (buffer) {
+//     if (foundTextArr.length > 0) {
+//       res.json(foundTextArr)
+//     } else {
+//       console.log('Not found')
+//       res.send('Not found')
+//     }
+//   })
+// })
 
 const start = () => {
   app.listen(CONFIG.port, (err) => {
