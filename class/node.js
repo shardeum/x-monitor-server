@@ -10,7 +10,6 @@ class Node {
     this.totalProcessed = 0
     this.avgTps = 0
     this.maxTps = 0
-    this.lastAvgTps = 0
     this.lastTotalProcessed = 0
     this.reportInterval = 1000
     this.nodes = this._createEmptyNodelist()
@@ -56,6 +55,7 @@ class Node {
 
     if (!this.isTimerStarted) {
       setTimeout(() => { this.updateAvgAndMaxTps()}, this.reportInterval)
+      this.isTimerStarted = true
     }
     // this.avgApplied += (data.txInjected - data.txRejected - data.txExpired)
     // writeStream.write(JSON.stringify(this.nodes.active[nodeId], null, 2) + '\n')
@@ -63,20 +63,27 @@ class Node {
 
   updateAvgAndMaxTps() {
     if (Object.keys(this.nodes.active).length === 0) return
-    let newAvgTps = (this.totalProcessed - this.lastTotalProcessed) / (this.reportInterval / 1000)
+    let newAvgTps = Math.round((this.totalProcessed - this.lastTotalProcessed) / (this.reportInterval / 1000))
     let percentDiff = 0
-    if(this.lastAvgTps > 0) percentDiff = (newAvgTps - this.lastAvgTps) / this.lastAvgTps
-    console.log('newAvgTps', newAvgTps)
-    console.log('lastAvgTPS', this.lastAvgTps)
-    console.log('percentDiff', percentDiff)
-    if (!Number.isNaN(percentDiff) && percentDiff < 0.5) {
-      // this.lastAvgTPS = this.avgTps
+    if (this.avgTps > 0) percentDiff = (newAvgTps - this.avgTps) / this.avgTps
+
+    // console.log('this.totalProcessed', this.totalProcessed)
+    // console.log('this.lastTotalProcessed', this.lastTotalProcessed)
+    // console.log('newAvgTps', newAvgTps)
+    // console.log('percentDiff', percentDiff)
+
+    // if (!Number.isNaN(percentDiff) && percentDiff < 0.5) {
+    if (true) {
       this.avgTps = newAvgTps
       if (newAvgTps > this.maxTps) this.maxTps = newAvgTps
-      this.lastTotalProcessed = this.totalProcessed
+
+      // console.log('this.avgTps', this.avgTps)
+      // console.log('this.maxTps', this.maxTps)
+
     } else {
       console.log('percent diff is NaN or larger than 50%', percentDiff)
     }
+    this.lastTotalProcessed = this.totalProcessed
     setTimeout(() => { this.updateAvgAndMaxTps() }, this.reportInterval)
   }
 
@@ -102,7 +109,6 @@ class Node {
     this.totalProcessed = 0
     this.avgTps = 0
     this.maxTps = 0
-    this.lastAvgTps = 0
     this.lastTotalProcessed = 0
   }
 }
