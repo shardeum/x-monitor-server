@@ -62,21 +62,14 @@ class Node {
   }
 
   updateAvgAndMaxTps() {
-    let percentDiff = 0
+    let diffRatio = 0
     if (Object.keys(this.nodes.active).length === 0) return
     let newAvgTps = Math.round((this.totalProcessed - this.lastTotalProcessed) / (this.reportInterval / 1000))
-    if (this.avgTps > 0) percentDiff = (newAvgTps - this.avgTps) / this.avgTps
-    // console.log('this.totalProcessed', this.totalProcessed)
-    // console.log('this.lastTotalProcessed', this.lastTotalProcessed)
-    // console.log('newAvgTps', newAvgTps)
-    // console.log('percentDiff', percentDiff)
-    // if (!Number.isNaN(percentDiff) && percentDiff < 0.5) {
-    if (true) {
-      this.avgTps = newAvgTps
-      if (newAvgTps > this.maxTps) this.maxTps = newAvgTps
-    } else {
-      console.log('percent diff is NaN or larger than 50%', percentDiff)
+    if (this.avgTps > 0) diffRatio = (newAvgTps - this.avgTps) / this.avgTps
+    if ((diffRatio < 1.5) || (diffRatio > 0.5)) {
+      if (newAvgTps > this.maxTps) { this.maxTps = newAvgTps }
     }
+    this.avgTps = newAvgTps
     this.lastTotalProcessed = this.totalProcessed
     setTimeout(() => { this.updateAvgAndMaxTps() }, this.reportInterval)
   }
