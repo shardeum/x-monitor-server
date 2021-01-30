@@ -14,6 +14,7 @@ class Node {
     this.reportInterval = 1000
     this.nodes = this._createEmptyNodelist()
     this.isTimerStarted = false
+    this.crashTimout = 30000
   }
 
   _createEmptyNodelist () {
@@ -45,6 +46,8 @@ class Node {
   heartbeat (nodeId, data) {
     this.nodes.active[nodeId] = data
     this.nodes.active[nodeId].timestamp = Date.now()
+    this.nodes.active[nodeId].crashed = false
+
     if (this.reportInterval !== data.reportInterval) {
       this.reportInterval = data.reportInterval
     }
@@ -71,7 +74,22 @@ class Node {
     }
     this.avgTps = newAvgTps
     this.lastTotalProcessed = this.totalProcessed
+    this.checkDeadOrAlive()
     setTimeout(() => { this.updateAvgAndMaxTps() }, this.reportInterval)
+  }
+
+  checkDeadOrAlive() {
+    console.log('dead or alive')
+    for (let nodeId in this.nodes.active) {
+      if (this.nodes.active[nodeId].timestamp < Date.now() - this.crashTimout) {
+        console.log('Node is dead')
+        this.nodes.active[nodeId].crashed = true
+      } else {
+        console.log('Node is active')
+        this.nodes.active[nodeId].crashed = false
+      }
+      console.log(this.nodes.active[nodeId])
+    }
   }
 
   report () {
