@@ -15,6 +15,7 @@ class Node {
     this.nodes = this._createEmptyNodelist()
     this.isTimerStarted = false
     this.crashTimout = 30000
+    this.lostNodeIds = new Map()
   }
 
   _createEmptyNodelist () {
@@ -47,6 +48,8 @@ class Node {
     this.nodes.active[nodeId] = data
     this.nodes.active[nodeId].timestamp = Date.now()
     this.nodes.active[nodeId].crashed = false
+    if (data.isLost) this.lostNodeIds.set(nodeId, true)
+    this.nodes.active[nodeId].isLost = this.lostNodeIds.get(nodeId) 
 
     if (this.reportInterval !== data.reportInterval) {
       this.reportInterval = data.reportInterval
