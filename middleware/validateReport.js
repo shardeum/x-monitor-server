@@ -105,7 +105,7 @@ function validateReport (arg) {
     console.log(`No partitionsCovered`)
     return false
   }
-  if (!isExist(arg.currentLoad) || typeof arg.currentLoad !== 'number') {
+  if (!isExist(arg.currentLoad)) {
     console.log(`No currentLoad`)
     return false
   }
