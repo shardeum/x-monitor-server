@@ -45,10 +45,18 @@ class Node {
   }
 
   heartbeat (nodeId, data) {
+    console.log("Heart beat data", data)
     this.nodes.active[nodeId] = data
     this.nodes.active[nodeId].timestamp = Date.now()
     this.nodes.active[nodeId].crashed = false
-    if (data.isLost) this.lostNodeIds.set(nodeId, true)
+    if (data.isLost) {
+      this.lostNodeIds.set(nodeId, true)
+    }
+    if (data.isRefuted) {
+      if (this.lostNodeIds.has(nodeId)) {
+        this.lostNodeIds.delete(nodeId)
+      }
+    }
     this.nodes.active[nodeId].isLost = this.lostNodeIds.get(nodeId) 
 
     if (this.reportInterval !== data.reportInterval) {
