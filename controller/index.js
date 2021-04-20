@@ -5,6 +5,8 @@ const removed = require('./removed');
 const heartbeat = require('./heartbeat');
 const report = require('./report');
 const flush = require('./flush');
+const syncReport = require('./syncReport');
+const getSyncReports = require('./getSyncReports');
 
 const Controller = {
   joining,
@@ -13,7 +15,9 @@ const Controller = {
   removed,
   heartbeat,
   report,
-  flush
+  flush,
+  syncReport,
+  getSyncReports
 }
 
 module.exports = Controller;

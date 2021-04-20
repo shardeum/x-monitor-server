@@ -16,6 +16,7 @@ class Node {
     this.isTimerStarted = false
     this.crashTimout = 30000
     this.lostNodeIds = new Map()
+    this.syncStatements = {}
   }
 
   _createEmptyNodelist () {
@@ -42,6 +43,10 @@ class Node {
 
   removed (nodeId) {
     delete this.nodes.active[nodeId]
+  }
+
+  syncReport (nodeId, syncStatement) {
+    this.syncStatements[nodeId] = syncStatement
   }
 
   heartbeat (nodeId, data) {
@@ -114,6 +119,10 @@ class Node {
       maxTps: this.maxTps,
       timestamp: Date.now()
     }
+  }
+
+  getSyncReports () {
+    return this.syncStatements
   }
 
   flush () {
