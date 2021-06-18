@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node .",
-    "update-docker": "docker build -t registry.gitlab.com/shardus/monitor-server . && docker push registry.gitlab.com/shardus/monitor-server"
+    "update-docker": "sudo docker build -t registry.gitlab.com/shardus/monitor-server . && sudo docker push registry.gitlab.com/shardus/monitor-server"
   },
   "repository": {
     "type": "git",
