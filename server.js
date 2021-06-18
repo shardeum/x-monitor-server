@@ -121,6 +121,7 @@ app.get('/summary', async (req, res) => {
   const joining = global.node.nodes['joining'] // { [id: string]: { nodeIpInfo: {...} } }
   const syncing = global.node.nodes['syncing'] // { [id: string]: { nodeIpInfo: {...} } }
   const active = global.node.nodes['active'] // { [id: string]: { nodeIpInfo: {...} } }
+  const removed = global.node.removedNodes
   const node = Object.values(active)[0] || Object.values(syncing)[0] || Object.values(joining)[0]
   if (node) {
     cycleUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/sync-newest-cycle`
@@ -142,9 +143,15 @@ app.get('/summary', async (req, res) => {
   for (const state in summary) {
     for (const id in global.node.nodes[state]) {
       const ip = global.node.nodes[state][id].nodeIpInfo.externalIp
+      const port = global.node.nodes[state][id].nodeIpInfo.externalPort
       const logStreamerServer = encodeURIComponent(`http://${ip}:3334`)
-      summary[state].push(`<a href="log2?server=${logStreamerServer}" target="_blank">[${ip}]</a>`)
+      summary[state].push(`<a href="log?ip=${ip}&port=${port}" target="_blank">[${ip}]</a>`)
     }
+  }
+
+  let removedHtmlStr = ``
+  for (let node of removed) {
+    removedHtmlStr += `${node.ip} `
   }
 
   const page = `<!DOCTYPE html>
@@ -169,6 +176,12 @@ app.get('/summary', async (req, res) => {
       <p>
         <code>
           ${summary.active.join(' ')}
+        </code>
+      </p>
+    removed: ${removed.length}
+      <p>
+        <code>
+          ${removedHtmlStr}
         </code>
       </p>
 

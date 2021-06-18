@@ -17,6 +17,8 @@ class Node {
     this.crashTimout = 30000
     this.lostNodeIds = new Map()
     this.syncStatements = {}
+    this.lostNodes = []
+    this.removedNodes = []
   }
 
   _createEmptyNodelist () {
@@ -42,6 +44,13 @@ class Node {
   }
 
   removed (nodeId) {
+    let removedNode = this.nodes.active[nodeId]
+    if (removedNode) this.removedNodes.push({
+      ip: removedNode.nodeIpInfo.externalIp,
+      port: removedNode.nodeIpInfo.externalPort,
+      nodeId,
+    })
+
     delete this.nodes.active[nodeId]
   }
 
@@ -95,16 +104,13 @@ class Node {
   }
 
   checkDeadOrAlive() {
-    console.log('dead or alive')
     for (let nodeId in this.nodes.active) {
       if (this.nodes.active[nodeId].timestamp < Date.now() - this.crashTimout) {
         console.log('Node is dead')
         this.nodes.active[nodeId].crashed = true
       } else {
-        console.log('Node is active')
         this.nodes.active[nodeId].crashed = false
       }
-      console.log(this.nodes.active[nodeId])
     }
   }
 
