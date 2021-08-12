@@ -29,12 +29,12 @@ class Node {
     }
 
     joining(publicKey, nodeIpInfo) {
-        this.nodes.joining[publicKey] = {nodeIpInfo}
+        this.nodes.joining[publicKey] = { nodeIpInfo }
     }
 
     joined(publicKey, nodeId, nodeIpInfo) {
         delete this.nodes.joining[publicKey]
-        this.nodes.syncing[nodeId] = {publicKey, nodeIpInfo, timestamp: Date.now()}
+        this.nodes.syncing[nodeId] = { publicKey, nodeIpInfo, timestamp: Date.now() }
         if (!this.history[nodeId]) this.history[nodeId] = {}
         this.history[nodeId].joined = Date.now()
         this.history[nodeId].data = {
@@ -80,7 +80,7 @@ class Node {
             this.history[nodeId].heartbeat = Date.now()
         }
         if (data.isLost) {
-            if(!this.lostNodeIds.get(nodeId)) {
+            if (!this.lostNodeIds.get(nodeId)) {
                 Logger.historyLogger.info(`NODE LOST, NodeId: ${nodeId}, Ip: ${data.nodeIpInfo.externalIp}, Port: ${data.nodeIpInfo.externalPort}`)
             }
             this.lostNodeIds.set(nodeId, true)
@@ -165,6 +165,21 @@ class Node {
 
     getSyncReports() {
         return this.syncStatements
+    }
+
+    getScaleReports() {
+        let scaleReports = []
+        for (let nodeId in this.nodes.active) {
+            const data = this.nodes.active[nodeId]
+            scaleReports.push({
+                nodeId,
+                ip: data.nodeIpInfo.externalIp,
+                port: data.nodeIpInfo.externalPort,
+                lastScalingTypeWinner: data.lastScalingTypeWinner ? data.lastScalingTypeWinner : null,
+                lastScalingTypeRequested: data.lastScalingTypeRequested ? data.lastScalingTypeRequested : null
+            })
+        }
+        return scaleReports
     }
 
     flush() {

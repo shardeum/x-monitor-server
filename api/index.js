@@ -6,6 +6,7 @@ const Middleware = require('../middleware');
 
 router.get('/report', Controller.report);
 router.get('/sync-report', Controller.getSyncReports);
+router.get('/scale-report', Controller.getScaleReports);
 router.get('/flush', Controller.flush);
 router.get('/history', Controller.history);
 
