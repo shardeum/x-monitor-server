@@ -7,6 +7,7 @@ const Middleware = require('../middleware');
 router.get('/report', Controller.report);
 router.get('/sync-report', Controller.getSyncReports);
 router.get('/flush', Controller.flush);
+router.get('/history', Controller.history);
 
 router.post('/joining', Middleware.fieldExistance(['publicKey']), Controller.joining);
 router.post('/joined', Middleware.fieldExistance(['publicKey', 'nodeId']), Controller.joined);

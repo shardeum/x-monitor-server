@@ -7,6 +7,7 @@ const report = require('./report');
 const flush = require('./flush');
 const syncReport = require('./syncReport');
 const getSyncReports = require('./getSyncReports');
+const history = require('./history');
 
 const Controller = {
   joining,
@@ -17,7 +18,8 @@ const Controller = {
   report,
   flush,
   syncReport,
-  getSyncReports
+  getSyncReports,
+  history
 }
 
 module.exports = Controller;
