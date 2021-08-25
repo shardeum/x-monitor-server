@@ -9,6 +9,7 @@ const syncReport = require('./syncReport');
 const getSyncReports = require('./getSyncReports');
 const history = require('./history');
 const getScaleReports = require('./getScaleReports');
+const mock = require('./mock');
 
 const Controller = {
   joining,
@@ -21,7 +22,8 @@ const Controller = {
   syncReport,
   getSyncReports,
   history,
-  getScaleReports
+  getScaleReports,
+  mock
 }
 
 module.exports = Controller;
