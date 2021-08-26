@@ -1,9 +1,9 @@
 const {generateNodeForTesting} = require('../class/mock')
+const generatedNodes = generateNodeForTesting(10000)
 const mock = (req, res, next) => {
     const count = req.query.count || 5000
-    const width = req.query.width || 900
-    const height = req.query.height || 900
-    const nodes = generateNodeForTesting(count)
+    if (count > 10000) return
+    const nodes = generatedNodes.slice(0, count)
     res.status(200).send(nodes);
 }
 

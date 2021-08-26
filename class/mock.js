@@ -22,6 +22,7 @@ G.maxId = parseInt('ffff', 16)
 
 const generateHash = function (num) {
     const table = [
+        '0',
         '1',
         '2',
         '3',
@@ -52,7 +53,7 @@ function generateNodeForTesting(count) {
         const nodeId = generateHash(64)
         const data = {
             nodeId,
-            position: calculateNetworkPosition(parseInt(nodeId.substr(0, 4), 16), count),
+            // position: calculateNetworkPosition(parseInt(nodeId.substr(0, 4), 16), count),
             appState: generateHash(64),
             nodelistHash: generateHash(64),
             cycleMarker: generateHash(64),
