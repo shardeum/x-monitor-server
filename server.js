@@ -117,6 +117,10 @@ app.get('/history-log', (req, res) => {
     res.render('history-log.html', {title: 'test'})
 })
 
+app.get('/large-network', (req, res) => {
+    res.render('large-network.html')
+})
+
 app.get('/summary', async (req, res) => {
     // Ping a node for the current cycle
     let cycle = {}

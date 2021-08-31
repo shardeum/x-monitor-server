@@ -2,6 +2,7 @@ const joining = require('./joining');
 const joined = require('./joined');
 const active = require('./active');
 const removed = require('./removed');
+const getRemoved = require('./getRemoved');
 const heartbeat = require('./heartbeat');
 const report = require('./report');
 const flush = require('./flush');
@@ -23,7 +24,8 @@ const Controller = {
   getSyncReports,
   history,
   getScaleReports,
-  mock
+  mock,
+  getRemoved
 }
 
 module.exports = Controller;

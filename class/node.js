@@ -18,6 +18,7 @@ class Node {
         this.removedNodes = []
         this.crashedNodes = {}
         this.history = {}
+        this.counter = 0
     }
 
     _createEmptyNodelist() {
@@ -55,10 +56,14 @@ class Node {
     removed(nodeId) {
         let removedNode = this.nodes.active[nodeId]
         if (removedNode) {
+            if (!this.removedNodes[this.counter]) {
+                this.removedNodes[this.counter] = {}
+            }
             this.removedNodes.push({
                 ip: removedNode.nodeIpInfo.externalIp,
                 port: removedNode.nodeIpInfo.externalPort,
-                nodeId
+                nodeId,
+                counter: this.counter
             })
             if (this.history[nodeId]) this.history[nodeId].removed = Date.now()
             Logger.historyLogger.info(`NODE REMOVED, NodeId: ${nodeId}, Ip: ${removedNode.nodeIpInfo.externalIp}, Port: ${removedNode.nodeIpInfo.externalPort}`)
@@ -74,6 +79,7 @@ class Node {
         // Logger.historyLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, Ip: ${data.nodeIpInfo.externalIp}, Port: ${data.nodeIpInfo.externalPort}`)
         // Logger.mainLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, ${JSON.stringify(data)}`)
         this.nodes.active[nodeId] = data
+        this.nodes.active[nodeId].nodeId = nodeId
         this.nodes.active[nodeId].timestamp = Date.now()
         this.nodes.active[nodeId].crashed = false
         if (this.history[nodeId]) {
@@ -100,6 +106,7 @@ class Node {
         this.totalTxRejected += data.txRejected
         this.totalTxExpired += data.txExpired
         this.totalProcessed += data.txProcessed
+        if (this.counter < data.cycleCounter) this.counter = data.cycleCounter
 
         if (!this.isTimerStarted) {
             setTimeout(() => {
@@ -150,8 +157,37 @@ class Node {
         return this.history
     }
 
-    report() {
-        return {
+    getRemoved() {
+        console.log("this.removedNodes", this.removedNodes)
+        console.log("counter", this.counter)
+        const start = this.counter >= 3 ? this.counter - 3 : 0
+        const end = this.counter
+        let recentRemovedNodes = this.removedNodes.filter(n => n.counter >= start && n.counter <= end)
+        return recentRemovedNodes
+    }
+
+    report(lastTimestamp) {
+        if (lastTimestamp) {
+            let updatedNodes = {}
+            for (let nodeId in this.nodes.active) {
+                if (this.nodes.active[nodeId].timestamp > lastTimestamp) {
+                    updatedNodes[nodeId] = this.nodes.active[nodeId]
+                }
+            }
+            return {
+                nodes: {
+                    active: updatedNodes
+                },
+                totalInjected: this.totalTxInjected,
+                totalRejected: this.totalTxRejected,
+                totalExpired: this.totalTxExpired,
+                totalProcessed: this.totalProcessed,
+                avgTps: this.avgTps,
+                maxTps: this.maxTps,
+                timestamp: Date.now()
+            }
+            return updatedNodes
+        } else return {
             nodes: this.nodes,
             totalInjected: this.totalTxInjected,
             totalRejected: this.totalTxRejected,
