@@ -196,7 +196,7 @@ class Node {
             for (let nodeId in this.rareEventCounters) {
                 let node = this.nodes.active[nodeId]
                 if (!node) continue
-                str += `<p><strong>${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}</strong></p>`
+                str += `<p><a target="_blank" href="/log?ip=${node.nodeIpInfo.externalIp}&port=${node.nodeIpInfo.externalPort}">${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}</a></p>`
                 let counterMap = this.rareEventCounters[nodeId]
                 for (let key in counterMap) {
                     str += `<p>&emsp; ${key} &emsp; ${counterMap[key].count}</p>`
