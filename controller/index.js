@@ -2,6 +2,7 @@ const joining = require('./joining');
 const joined = require('./joined');
 const active = require('./active');
 const removed = require('./removed');
+const rareCounter = require('./rareCounter');
 const getRemoved = require('./getRemoved');
 const heartbeat = require('./heartbeat');
 const report = require('./report');
@@ -13,19 +14,20 @@ const getScaleReports = require('./getScaleReports');
 const mock = require('./mock');
 
 const Controller = {
-  joining,
-  joined,
-  active,
-  removed,
-  heartbeat,
-  report,
-  flush,
-  syncReport,
-  getSyncReports,
-  history,
-  getScaleReports,
-  mock,
-  getRemoved
+    joining,
+    joined,
+    active,
+    removed,
+    heartbeat,
+    report,
+    flush,
+    syncReport,
+    getSyncReports,
+    history,
+    getScaleReports,
+    mock,
+    getRemoved,
+    rareCounter
 }
 
 module.exports = Controller;

@@ -19,6 +19,7 @@ class Node {
         this.crashedNodes = {}
         this.history = {}
         this.counter = 0
+        this.rareEventCounters = {}
     }
 
     _createEmptyNodelist() {
@@ -97,6 +98,10 @@ class Node {
                 Logger.historyLogger.info(`NODE REFUTED, NodeId: ${nodeId}, Ip: ${data.nodeIpInfo.externalIp}, Port: ${data.nodeIpInfo.externalPort}`)
             }
         }
+
+        if (data.rareCounters && Object.keys(data.rareCounters).length > 0) {
+            this.rareEventCounters[nodeId] = data.rareCounters
+        }
         this.nodes.active[nodeId].isLost = this.lostNodeIds.get(nodeId)
 
         if (this.reportInterval !== data.reportInterval) {
@@ -158,12 +163,51 @@ class Node {
     }
 
     getRemoved() {
-        console.log("this.removedNodes", this.removedNodes)
-        console.log("counter", this.counter)
         const start = this.counter >= 3 ? this.counter - 3 : 0
         const end = this.counter
         let recentRemovedNodes = this.removedNodes.filter(n => n.counter >= start && n.counter <= end)
         return recentRemovedNodes
+    }
+
+    getRareEventCounters(shouldAggregate) {
+        let str = ``
+        if (shouldAggregate) {
+            let aggregatedCounter = {}
+            for (let nodeId in this.rareEventCounters) {
+                let counterMap = this.rareEventCounters[nodeId]
+                for (let key in counterMap) {
+                    if (aggregatedCounter[key]) aggregatedCounter[key].count += counterMap[key].count
+                    else aggregatedCounter[key] = {
+                        count: counterMap[key].count,
+                        subCounters: {}
+                    }
+                    let subCounterMap = counterMap[key].subCounters
+                    for (let key2 in subCounterMap) {
+                        if (aggregatedCounter[key].subCounters[key2]) aggregatedCounter[key].subCounters[key2].count += subCounterMap[key2].count
+                        else aggregatedCounter[key].subCounters[key2] = {
+                            count: subCounterMap[key2].count,
+                            subCounters: {}
+                        }
+                    }
+                }
+            }
+            return aggregatedCounter
+        } else {
+            for (let nodeId in this.rareEventCounters) {
+                let node = this.nodes.active[nodeId]
+                if (!node) continue
+                str += `<p><strong>${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}</strong></p>`
+                let counterMap = this.rareEventCounters[nodeId]
+                for (let key in counterMap) {
+                    str += `<p>&emsp; ${key} &emsp; ${counterMap[key].count}</p>`
+                    let subCounterMap = counterMap[key].subCounters
+                    for (let key2 in subCounterMap) {
+                        str += `<p>&emsp; &emsp; ${key2} &emsp; ${subCounterMap[key2].count}</p>`
+                    }
+                }
+            }
+        }
+        return str
     }
 
     report(lastTimestamp) {

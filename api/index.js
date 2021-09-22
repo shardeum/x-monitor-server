@@ -10,6 +10,7 @@ router.get('/scale-report', Controller.getScaleReports);
 router.get('/removed', Controller.getRemoved);
 router.get('/flush', Controller.flush);
 router.get('/history', Controller.history);
+router.get('/rare-counter', Controller.rareCounter)
 router.get('/mock', Controller.mock);
 
 router.post('/joining', Middleware.fieldExistance(['publicKey']), Controller.joining);
