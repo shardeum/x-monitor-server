@@ -43,6 +43,7 @@ class Node {
             nodeIpInfo,
             nodeId
         }
+        this.checkCrashedBefore(this.history[nodeId].data)
         Logger.historyLogger.info(`NODE JOINED, NodeId: ${nodeId}, Ip: ${nodeIpInfo.externalIp}, Port: ${nodeIpInfo.externalPort}`)
     }
 
@@ -52,6 +53,16 @@ class Node {
         this.history[nodeId].active = Date.now()
         const nodeData = this.history[nodeId].data
         Logger.historyLogger.info(`NODE ACTIVE, NodeId: ${nodeId}, Ip: ${nodeData.nodeIpInfo.externalIp}, Port: ${nodeData.nodeIpInfo.externalPort}`)
+    }
+
+    checkCrashedBefore(data) {
+        let foundInCrashed = Object.values(this.crashedNodes).find(node => node.nodeIpInfo.externalIp === data.nodeIpInfo.externalIp && node.nodeIpInfo.externalPort === data.nodeIpInfo.externalPort)
+        if (foundInCrashed) {
+            Logger.historyLogger.info(`Crashed node ${foundInCrashed.nodeId} has restarted and active.`)
+            console.log(`Crashed node ${foundInCrashed.nodeId} has restarted and active.`)
+            delete this.crashedNodes[foundInCrashed.nodeId]
+            delete this.nodes.active[foundInCrashed.nodeId]
+        }
     }
 
     removed(nodeId) {
