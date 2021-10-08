@@ -12,7 +12,7 @@ class Node {
         this.reportInterval = 1000
         this.nodes = this._createEmptyNodelist()
         this.isTimerStarted = false
-        this.crashTimout = 30000
+        this.crashTimout = 60000
         this.lostNodeIds = new Map()
         this.syncStatements = {}
         this.removedNodes = []
@@ -111,7 +111,8 @@ class Node {
         }
 
         if (data.rareCounters && Object.keys(data.rareCounters).length > 0) {
-            this.rareEventCounters[nodeId] = data.rareCounters
+            this.rareEventCounters[nodeId] = JSON.parse(JSON.stringify(data.rareCounters))// deep clone rare
+            // counters so that later it can be deleted from report
         }
         this.nodes.active[nodeId].isLost = this.lostNodeIds.get(nodeId)
 
@@ -130,6 +131,9 @@ class Node {
             }, this.reportInterval)
             this.isTimerStarted = true
         }
+
+        // decouple rareCounters from report to avoid large report size
+        delete this.nodes.active[nodeId].rareCounters
 
         // this.avgApplied += (data.txInjected - data.txRejected - data.txExpired)
         // writeStream.write(JSON.stringify(this.nodes.active[nodeId], null, 2) + '\n')
@@ -231,7 +235,9 @@ class Node {
             }
             return {
                 nodes: {
-                    active: updatedNodes
+                    active: updatedNodes,
+                    syncing: this.nodes.syncing,
+                    joining: this.nodes.joining
                 },
                 totalInjected: this.totalTxInjected,
                 totalRejected: this.totalTxRejected,
@@ -241,7 +247,6 @@ class Node {
                 maxTps: this.maxTps,
                 timestamp: Date.now()
             }
-            return updatedNodes
         } else return {
             nodes: this.nodes,
             totalInjected: this.totalTxInjected,
