@@ -1,7 +1,7 @@
 const report = (req, res, next) => {
-  const nodeId = req.body.nodeId;
+    const lastTimestamp = req.query.timestamp
   let Node = global.node;
-  let data = Node.report();
+  let data = Node.report(lastTimestamp);
   res.status(200).send(data);
 }
 

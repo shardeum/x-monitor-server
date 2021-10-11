@@ -35,7 +35,17 @@ class Node {
     }
 
     joined(publicKey, nodeId, nodeIpInfo) {
-        delete this.nodes.joining[publicKey]
+        if(this.nodes.joining[publicKey]) delete this.nodes.joining[publicKey]
+        if (this.nodes.active[nodeId]) {
+            Logger.mainLogger.info(`Joined node is found in the active list. Comparing the timestamps...`)
+            // chcking if last heart beat of active node is sent within last x seconds (report interval)
+            if (Date.now() - this.nodes.active[nodeId].timestamp < 1.5 * this.reportInterval) {
+                Logger.mainLogger.info(`This node ${nodeId} sent heartbeat recently. So, this joined message is neglected.`)
+                return // not likely that active node will re-join the network again in a report interval
+            }
+            Logger.mainLogger.info(`This node ${nodeId} does not sent heartbeat recently. So, this joined message is processed.`)
+            delete this.nodes.active[nodeId]
+        }
         this.nodes.syncing[nodeId] = { publicKey, nodeIpInfo, timestamp: Date.now() }
         if (!this.history[nodeId]) this.history[nodeId] = {}
         this.history[nodeId].joined = Date.now()
@@ -90,6 +100,10 @@ class Node {
     heartbeat(nodeId, data) {
         // Logger.historyLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, Ip: ${data.nodeIpInfo.externalIp}, Port: ${data.nodeIpInfo.externalPort}`)
         // Logger.mainLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, ${JSON.stringify(data)}`)
+        if (this.nodes.syncing[nodeId]) {
+            Logger.mainLogger.debug(`Found heart beating node ${nodeId} in syncing list. Removing it from syncing list.`)
+            delete this.nodes.syncing[nodeId]
+        }
         this.nodes.active[nodeId] = data
         this.nodes.active[nodeId].nodeId = nodeId
         this.nodes.active[nodeId].timestamp = Date.now()
@@ -232,6 +246,9 @@ class Node {
                 if (this.nodes.active[nodeId].timestamp > lastTimestamp) {
                     updatedNodes[nodeId] = this.nodes.active[nodeId]
                 }
+            }
+            for (let nodeId in this.crashedNodes) {
+                updatedNodes[nodeId] = this.crashedNodes[nodeId]
             }
             return {
                 nodes: {
