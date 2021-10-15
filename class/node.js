@@ -1,4 +1,5 @@
 let Logger = require('./logger')
+let ProfilerModule = require('./profiler/profiler')
 
 class Node {
     constructor() {
@@ -100,6 +101,7 @@ class Node {
     heartbeat(nodeId, data) {
         // Logger.historyLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, Ip: ${data.nodeIpInfo.externalIp}, Port: ${data.nodeIpInfo.externalPort}`)
         // Logger.mainLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, ${JSON.stringify(data)}`)
+        ProfilerModule.profilerInstance.profileSectionStart('heartbeat')
         if (this.nodes.syncing[nodeId]) {
             Logger.mainLogger.debug(`Found heart beating node ${nodeId} in syncing list. Removing it from syncing list.`)
             delete this.nodes.syncing[nodeId]
@@ -151,9 +153,11 @@ class Node {
 
         // this.avgApplied += (data.txInjected - data.txRejected - data.txExpired)
         // writeStream.write(JSON.stringify(this.nodes.active[nodeId], null, 2) + '\n')
+        ProfilerModule.profilerInstance.profileSectionEnd('heartbeat')
     }
 
     updateAvgAndMaxTps() {
+        ProfilerModule.profilerInstance.profileSectionStart('updateAvgAndMaxTps')
         let diffRatio = 0
         if (Object.keys(this.nodes.active).length === 0) return
         let newAvgTps = Math.round((this.totalProcessed - this.lastTotalProcessed) / (this.reportInterval / 1000))
@@ -169,9 +173,11 @@ class Node {
         setTimeout(() => {
             this.updateAvgAndMaxTps()
         }, this.reportInterval)
+        ProfilerModule.profilerInstance.profileSectionEnd('updateAvgAndMaxTps')
     }
 
     checkDeadOrAlive() {
+        ProfilerModule.profilerInstance.profileSectionStart('checkDeadOrAlive')
         for (let nodeId in this.nodes.active) {
             if (this.nodes.active[nodeId].timestamp < Date.now() - this.crashTimout) {
                 this.nodes.active[nodeId].crashed = true
@@ -185,6 +191,7 @@ class Node {
                 this.nodes.active[nodeId].crashed = false
             }
         }
+        ProfilerModule.profilerInstance.profileSectionEnd('checkDeadOrAlive')
     }
 
     getHistory() {
@@ -240,6 +247,7 @@ class Node {
     }
 
     report(lastTimestamp) {
+        ProfilerModule.profilerInstance.profileSectionStart('GET_report')
         if (lastTimestamp) {
             let updatedNodes = {}
             for (let nodeId in this.nodes.active) {
@@ -274,6 +282,7 @@ class Node {
             maxTps: this.maxTps,
             timestamp: Date.now()
         }
+        ProfilerModule.profilerInstance.profileSectionEnd('GET_report')
     }
 
     getSyncReports() {
@@ -293,6 +302,10 @@ class Node {
             })
         }
         return scaleReports
+    }
+
+    getActiveList() {
+        return Object.values(this.nodes.active)
     }
 
     flush() {

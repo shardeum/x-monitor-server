@@ -1,40 +1,41 @@
-import {statisticsInstance} from '../statistics'
-
 const NS_PER_SEC = 1e9
 
 const os = require('os')
 const process = require('process')
+let statisticsInstance
 
-export let memoryReportingInstance
-
+let memoryReportingInstance
 let Node = global.node
 
 class MemoryReporting {
 
     constructor(server) {
-        memoryReportingInstance = this
+        console.log("Initialising MemoryReport")
+        const StatisticsModule = require('./Statistics')
+        console.log("StatisticsModule", StatisticsModule)
+        this.statisticsInstance = StatisticsModule.statisticsInstance
+        module.exports.memoryReportingInstance = this
         this.report = []
         this.server = server
         this.lastCPUTimes = this.getCPUTimes()
+        console.log("this", this)
     }
 
     registerEndpoints() {
         this.server.get('/memory', (req, res) => {
             let toMB = 1 / 1000000
             let report = process.memoryUsage()
-            let outputStr = ''
-            outputStr += `System Memory Report.  Timestamp: ${Date.now()}\n`
-            outputStr += `rss: ${(report.rss * toMB).toFixed(2)} MB\n`
-            outputStr += `heapTotal: ${(report.heapTotal * toMB).toFixed(2)} MB\n`
-            outputStr += `heapUsed: ${(report.heapUsed * toMB).toFixed(2)} MB\n`
-            outputStr += `external: ${(report.external * toMB).toFixed(2)} MB\n`
-            outputStr += `arrayBuffers: ${(report.arrayBuffers * toMB).toFixed(
-                2
-            )} MB\n\n\n`
+
+            res.write(`System Memory Report.  Timestamp: ${Date.now()}\n`)
+            res.write(`rss: ${(report.rss * toMB).toFixed(2)} MB\n`)
+            res.write(`heapTotal: ${(report.heapTotal * toMB).toFixed(2)} MB\n`)
+            res.write(`heapUsed: ${(report.heapUsed * toMB).toFixed(2)} MB\n`)
+            res.write(`external: ${(report.external * toMB).toFixed(2)} MB\n`)
+            res.write(`arrayBuffers: ${(report.arrayBuffers * toMB).toFixed(2)} MB\n\n\n`)
 
             this.gatherReport()
-            outputStr = this.reportToStream(this.report, outputStr, 0)
-            res.send(outputStr)
+            this.reportToStream(this.report, res, 0)
+            res.end()
         })
 
         // this.server.get('memory-gc', (req, res) => {
@@ -54,8 +55,8 @@ class MemoryReporting {
     }
 
     updateCpuPercent() {
-        let cpuPercent = memoryReportingInstance.cpuPercent()
-        statisticsInstance.setManualStat('cpuPercent', cpuPercent)
+        let cpuPercent = this.cpuPercent()
+        this.statisticsInstance.setManualStat('cpuPercent', cpuPercent)
     }
 
     addToReport(
@@ -68,15 +69,15 @@ class MemoryReporting {
         this.report.push(obj)
     }
 
-    reportToStream(report, outputStr, indent) {
+    reportToStream(report, stream, indent) {
         let indentText = '___'.repeat(indent)
         for (let item of report) {
-            let { category, subcat, itemKey, count } = item
+            let {category, subcat, itemKey, count} = item
             let countStr = `${count}`
-            if (itemKey === 'cpuPercent' || itemKey === 'cpuAVGPercent') countStr += ' %'
-            outputStr += `${countStr.padStart(10)} ${category} ${subcat} ${itemKey}\n`
+            stream.write(
+                `${countStr.padStart(10)} ${category} ${subcat} ${itemKey}\n`
+            )
         }
-        return outputStr
     }
 
     gatherReport() {
@@ -139,6 +140,7 @@ class MemoryReporting {
     }
 
     stateReport() {
+        let Node = global.node
         let numActiveNodes = Node.getActiveList().length
         this.addToReport('P2P','Nodelist', 'numActiveNodes', numActiveNodes )
     }
@@ -146,9 +148,9 @@ class MemoryReporting {
     systemProcessReport() {
         this.addToReport('Process','CPU', 'cpuPercent', this.roundTo3decimals(this.cpuPercent() * 100) )
 
-        let avgCPU = statisticsInstance.getAverage('cpuPercent')
+        let avgCPU = this.statisticsInstance.getAverage('cpuPercent')
         this.addToReport('Process','CPU', 'cpuAVGPercent', this.roundTo3decimals(avgCPU * 100) )
-        let multiStats = statisticsInstance.getMultiStatReport('cpuPercent')
+        let multiStats = this.statisticsInstance.getMultiStatReport('cpuPercent')
 
         multiStats.allVals.forEach(function(val, index) {
             multiStats.allVals[index] = Math.round(val * 100);
@@ -165,5 +167,4 @@ class MemoryReporting {
         }
     }
 }
-
-export default MemoryReporting
+module.exports.MemoryReporting = MemoryReporting

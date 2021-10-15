@@ -2,10 +2,8 @@ const path = require('path')
 const fs = require('fs')
 const stream = require('stream')
 const {EventEmitter} = require('events')
-const utils = require('../utils/index')
-import { nestedCountersInstance } from '../profiler/nestedCounters'
-
-let statisticsInstance
+const utils = require('../../utils')
+let {nestedCountersInstance} = require('./nestedCounters')
 
 class Statistics extends EventEmitter {
     constructor(
@@ -19,6 +17,7 @@ class Statistics extends EventEmitter {
         },
         context
     ) {
+        console.log("Initialising Statistics")
         super()
         this.intervalDuration = config.interval || 1
         this.intervalDuration = this.intervalDuration * 1000
@@ -33,7 +32,7 @@ class Statistics extends EventEmitter {
         this.snapshotWriteFns = []
         this.stream = null
         this.streamIsPushable = false
-        statisticsInstance = this
+        module.exports.statisticsInstance = this
         if (config.save) {
             // Pipe stream to file
             const file = path.join(baseDir, 'statistics.tsv')
@@ -51,7 +50,7 @@ class Statistics extends EventEmitter {
     }
 
     getStream() {
-        this.stream = new Readable()
+        this.stream = new stream.Readable()
         this.stream._read = () => {
             this.streamIsPushable = true
         }
@@ -357,7 +356,4 @@ function _exists(thing) {
     return typeof thing !== 'undefined' && thing !== null
 }
 
-module.exports = {
-    Statistics,
-    statisticsInstance
-}
+module.exports.Statistics = Statistics

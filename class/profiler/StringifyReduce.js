@@ -1,4 +1,4 @@
-export const makeShortHash = (x: any, n = 4) => {
+const makeShortHash = (x, n = 4) => {
     if (!x) {
         return x
     }
@@ -16,7 +16,7 @@ export const makeShortHash = (x: any, n = 4) => {
 
 const objToString = Object.prototype.toString
 const objKeys =
-    ((obj: any) => {
+    ((obj) => {
         const keys = []
         // tslint:disable-next-line: forin
         for (const name in obj) {
@@ -25,7 +25,7 @@ const objKeys =
         return keys
     }) || Object.keys
 
-export const stringifyReduce = (val: any, isArrayProp?: boolean): any => {
+const stringifyReduce = (val, isArrayProp)=> {
     let i, max, str, keys, key, propVal, toStr
     if (val === true) {
         return 'true'
@@ -92,7 +92,7 @@ export const stringifyReduce = (val: any, isArrayProp?: boolean): any => {
     }
 }
 
-export const replacer = (key: any, value: any) => {
+const replacer = (key, value) => {
     const originalObject = value // this[key]
     if (originalObject instanceof Map) {
         return {
@@ -104,7 +104,7 @@ export const replacer = (key: any, value: any) => {
     }
 }
 
-export const reviver = (key: any, value: any) => {
+const reviver = (key, value) => {
     if (typeof value === 'object' && value !== null) {
         if (value.dataType === 'stringifyReduce_map_2_array') {
             return new Map(value.value)
@@ -113,7 +113,7 @@ export const reviver = (key: any, value: any) => {
     return value
 }
 
-export const reviverExpander = (key: any, value: any) => {
+const reviverExpander = (key, value) => {
     if (typeof value === 'object' && value !== null) {
         if (value.dataType === 'stringifyReduce_map_2_array') {
             return new Map(value.value)
@@ -124,4 +124,8 @@ export const reviverExpander = (key: any, value: any) => {
         return res
     }
     return value
+}
+
+module.exports = {
+    stringifyReduce
 }

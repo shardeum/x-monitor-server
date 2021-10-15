@@ -1,5 +1,4 @@
-const nestedCountersInstance = require('./nestedCounters')
-const {memoryReportingInstance} = require('./MemoryReporting')
+let NestedCountersModule = require('./nestedCounters')
 const utils = require('../../utils')
 
 const NS_PER_SEC = 1e9
@@ -15,13 +14,14 @@ class Profiler {
     netExternalStackHeight
     server
     constructor(server) {
+        console.log("Initialising Profiler")
         this.sectionTimes = {}
         this.eventCounters = new Map()
         this.stackHeight = 0
         this.netInternalStackHeight = 0
         this.netExternalStackHeight = 0
         this.server = server
-        profilerInstance = this
+        module.exports.profilerInstance = this
 
         this.profileSectionStart('_total', true)
         this.profileSectionStart('_internal_total', true)
@@ -30,7 +30,8 @@ class Profiler {
     registerEndpoints() {
         this.server.get('/perf', (req, res) => {
             let result = this.printAndClearReport(1)
-            res.send(result)
+            res.write(result)
+            res.end()
         })
     }
 
@@ -39,7 +40,7 @@ class Profiler {
 
         if (section != null && section.started === true) {
             if (profilerSelfReporting)
-                nestedCountersInstance.countEvent('profiler-start-error', sectionName)
+                NestedCountersModule.nestedCountersInstance.countEvent('profiler-start-error', sectionName)
             return
         }
 
@@ -54,7 +55,7 @@ class Profiler {
         section.c++
 
         if (internal === false) {
-            nestedCountersInstance.countEvent('profiler', sectionName)
+            NestedCountersModule.nestedCountersInstance.countEvent('profiler', sectionName)
 
             this.stackHeight++
             if (this.stackHeight === 1) {
@@ -80,7 +81,7 @@ class Profiler {
         let section = this.sectionTimes[sectionName]
         if (section == null || section.started === false) {
             if (profilerSelfReporting)
-                nestedCountersInstance.countEvent('profiler-end-error', sectionName)
+                NestedCountersModule.nestedCountersInstance.countEvent('profiler-end-error', sectionName)
             return
         }
 
@@ -91,7 +92,7 @@ class Profiler {
 
         if (internal === false) {
             if (profilerSelfReporting)
-                nestedCountersInstance.countEvent('profiler-end', sectionName)
+                NestedCountersModule.nestedCountersInstance.countEvent('profiler-end', sectionName)
 
             this.stackHeight--
             if (this.stackHeight === 0) {
@@ -120,7 +121,7 @@ class Profiler {
 
     getTotalBusyInternal(){
         if (profilerSelfReporting)
-            nestedCountersInstance.countEvent('profiler-note', 'getTotalBusyInternal')
+            NestedCountersModule.nestedCountersInstance.countEvent('profiler-note', 'getTotalBusyInternal')
 
         this.profileSectionEnd('_internal_total', true)
         let internalTotalBusy = this.sectionTimes['_internal_totalBusy']
@@ -173,7 +174,7 @@ class Profiler {
         }
     }
 
-    printAndClearReport(delta?): string {
+    printAndClearReport(delta){
         this.profileSectionEnd('_total', true)
 
         let result = 'Profile Sections:\n'
@@ -220,7 +221,4 @@ class Profiler {
     }
 }
 
-module.exports = {
-    Profiler,
-    profilerInstance
-}
+module.exports.Profiler = Profiler

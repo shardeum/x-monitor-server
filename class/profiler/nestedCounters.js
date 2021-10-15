@@ -1,7 +1,7 @@
 const NS_PER_SEC = 1e9
 
 const {stringifyReduce} = require('./StringifyReduce')
-const core = require('shardus-crypto-utils')
+// const core = require('shardus-crypto-utils')
 
 // process.hrtime.bigint()
 
@@ -14,9 +14,10 @@ class NestedCounters {
     server = null
 
     constructor(server) {
+        console.log("Initialising Nested Counter")
         this.eventCounters = new Map()
         this.rareEventCounters = new Map()
-        nestedCountersInstance = this
+        module.exports.nestedCountersInstance = this
         this.infLoopDebug = false
         this.server = server
     }
@@ -34,18 +35,18 @@ class NestedCounters {
             res.send(`counts reset ${Date.now()}`)
         })
 
-        this.server.get('/debug-inf-loop', (req, res) => {
-            res.send('starting inf loop, goodbye')
-            let counter = 1
-            this.infLoopDebug = true
-            while (this.infLoopDebug) {
-                let s = "asdf"
-                let s2 = stringifyReduce({ test: [s, s, s, s, s, s, s] })
-                let s3 = stringifyReduce({ test: [s2, s2, s2, s2, s2, s2, s2] })
-                core.hash(s3)
-                counter++
-            }
-        })
+        // this.server.get('/debug-inf-loop', (req, res) => {
+        //     res.send('starting inf loop, goodbye')
+        //     let counter = 1
+        //     this.infLoopDebug = true
+        //     while (this.infLoopDebug) {
+        //         let s = "asdf"
+        //         let s2 = stringifyReduce({ test: [s, s, s, s, s, s, s] })
+        //         let s3 = stringifyReduce({ test: [s2, s2, s2, s2, s2, s2, s2] })
+        //         core.hash(s3)
+        //         counter++
+        //     }
+        // })
 
         this.server.get('/debug-inf-loop-off', (req, res) => {
             this.infLoopDebug = false
@@ -79,7 +80,7 @@ class NestedCounters {
         counterMap = nextNode.subCounters
     }
 
-    countRareEvent(category1: string, category2: string, count: number = 1) {
+    countRareEvent(category1, category2, count= 1) {
         // trigger normal event counter
         this.countEvent(category1, category2, count)
 
@@ -148,8 +149,4 @@ class NestedCounters {
         return outputStr
     }
 }
-
-module.exports = {
-    NestedCounters,
-    nestedCountersInstance
-}
+module.exports.NestedCounters = NestedCounters

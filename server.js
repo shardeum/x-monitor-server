@@ -16,6 +16,10 @@ const path = require('path')
 const fs = require('fs')
 const rfs = require('rotating-file-stream')
 const Logger = require('./class/logger')
+const MemoryModule = require('./class/profiler/MemoryReporting')
+const { Statistics } = require('./class/profiler/Statistics')
+const { Profiler } = require('./class/profiler/profiler')
+const { NestedCounters } = require('./class/profiler/nestedCounters')
 const app = express()
 
 const logDirectory = path.join(__dirname, 'req-log')
@@ -72,6 +76,31 @@ global.node = node
 
 // Setup Log Directory
 Logger.initLogger(baseDir, logsConfig)
+
+let nestedCounter = new NestedCounters(app)
+let profiler = new Profiler(app)
+let statistics = new Statistics(
+    logDir,
+    CONFIG.statistics,
+    {
+        counters: [
+        ],
+        watchers: {
+
+        },
+        timers: [],
+        manualStats: ['cpuPercent'],
+    },
+    {}
+)
+let memoryReporter = new MemoryModule.MemoryReporting(app)
+statistics.startSnapshots()
+statistics.on('snapshot', MemoryModule.memoryReportingInstance.updateCpuPercent.bind(MemoryModule.memoryReportingInstance))
+
+// ========== ENDPOINTS ==========
+memoryReporter.registerEndpoints()
+nestedCounter.registerEndpoints()
+profiler.registerEndpoints()
 
 console.log('absoluteClientPath', clientDirectory)
 console.log('view Directory', viewDirectory)
