@@ -35,19 +35,67 @@ class Node {
         this.nodes.joining[publicKey] = { nodeIpInfo }
     }
 
+    getExistingActiveNode(nodeId, nodeIpInfo) {
+        Logger.mainLogger.debug("Checking existing node.", nodeId, nodeIpInfo)
+        try {
+            if (this.nodes.active[nodeId]) {
+                Logger.mainLogger.debug("Found existing active node with same nodeId", nodeId)
+                return this.nodes.active[nodeId]
+            }  else {
+                for (let id in this.nodes.active) {
+                    let report = this.nodes.active[id]
+                    if (report.nodeIpInfo.externalIp === nodeIpInfo.externalIp && report.nodeIpInfo.externalPort === nodeIpInfo.externalPort) {
+                        return this.nodes.active[id]
+                    }
+                }
+            }
+        } catch(e) {
+           Logger.mainLogger.error('Error while checking active node', e)
+        }
+        Logger.mainLogger.debug("No existing active node found.")
+        return
+    }
+
+    getExistingSyncingNode(nodeId, nodeIpInfo) {
+        Logger.mainLogger.debug("Checking existing syncing node.", nodeId, nodeIpInfo)
+        try {
+            if (this.nodes.syncing[nodeId]) {
+                Logger.mainLogger.debug("Found existing syncing node with same nodeId", nodeId)
+                return this.nodes.syncing[nodeId]
+            }  else {
+                for (let id in this.nodes.syncing) {
+                    let report = this.nodes.syncing[id]
+                    if (report.nodeIpInfo.externalIp === nodeIpInfo.externalIp && report.nodeIpInfo.externalPort === nodeIpInfo.externalPort) {
+                        return this.nodes.syncing[id]
+                    }
+                }
+            }
+        } catch(e) {
+            Logger.mainLogger.error('Error while chcking syncing node', e)
+        }
+        Logger.mainLogger.debug("No existing syncing node found.")
+        return
+    }
+
     joined(publicKey, nodeId, nodeIpInfo) {
         if(this.nodes.joining[publicKey]) delete this.nodes.joining[publicKey]
-        if (this.nodes.active[nodeId]) {
+        let existingSyncingNode = this.getExistingSyncingNode(nodeId, nodeIpInfo)
+        let existingActiveNode = this.getExistingActiveNode(nodeId, nodeIpInfo)
+        if (existingSyncingNode) {
+            delete this.nodes.syncing[existingSyncingNode.nodeId]
+            Logger.mainLogger.info(`Joined node is found in the syncing list. Removing existing syncing node.`)
+        }
+        if (existingActiveNode) {
             Logger.mainLogger.info(`Joined node is found in the active list. Comparing the timestamps...`)
-            // chcking if last heart beat of active node is sent within last x seconds (report interval)
-            if (Date.now() - this.nodes.active[nodeId].timestamp < 1.5 * this.reportInterval) {
-                Logger.mainLogger.info(`This node ${nodeId} sent heartbeat recently. So, this joined message is neglected.`)
+            // checking if last heart beat of active node is sent within last x seconds (report interval)
+            if (Date.now() - existingActiveNode.timestamp < 1.5 * this.reportInterval) {
+                Logger.mainLogger.info(`This node ${existingActiveNode.nodeId} sent heartbeat recently. So, this joined message is neglected.`)
                 return // not likely that active node will re-join the network again in a report interval
             }
-            Logger.mainLogger.info(`This node ${nodeId} does not sent heartbeat recently. So, this joined message is processed.`)
-            delete this.nodes.active[nodeId]
+            Logger.mainLogger.info(`This node ${existingActiveNode.nodeId} does not sent heartbeat recently. So, this joined message is processed.`)
+            delete this.nodes.active[existingActiveNode.nodeId]
         }
-        this.nodes.syncing[nodeId] = { publicKey, nodeIpInfo, timestamp: Date.now() }
+        this.nodes.syncing[nodeId] = { publicKey, nodeId, nodeIpInfo, timestamp: Date.now() }
         if (!this.history[nodeId]) this.history[nodeId] = {}
         this.history[nodeId].joined = Date.now()
         this.history[nodeId].data = {
