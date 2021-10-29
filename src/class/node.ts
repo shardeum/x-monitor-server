@@ -1,5 +1,7 @@
-const Logger = require("./logger");
-const ProfilerModule = require("./profiler/profiler");
+import axios from 'axios';
+
+const Logger = require('./logger');
+const ProfilerModule = require('./profiler/profiler');
 
 import {
   NodeList,
@@ -8,7 +10,7 @@ import {
   ActiveReport,
   SyncReport,
   CrashNodes,
-} from "../interface/interface";
+} from '../interface/interface';
 
 export class Node {
   totalTxInjected: number;
@@ -25,10 +27,11 @@ export class Node {
   lostNodeIds: Map<string, boolean>;
   syncStatements: {};
   removedNodes: any[];
-  crashedNodes: { [key: string]: CrashNodes };
+  crashedNodes: {[key: string]: CrashNodes};
   history: {};
   counter: number;
   rareEventCounters = {};
+
   constructor() {
     this.totalTxInjected = 0;
     this.totalTxRejected = 0;
@@ -59,21 +62,21 @@ export class Node {
   }
 
   joining(publicKey: string, nodeIpInfo: NodeIpInfo): void {
-    this.nodes.joining[publicKey] = { nodeIpInfo };
+    this.nodes.joining[publicKey] = {nodeIpInfo};
   }
 
   getExistingActiveNode(nodeId: string, nodeIpInfo: NodeIpInfo): ActiveReport {
-    Logger.mainLogger.debug("Checking existing node.", nodeId, nodeIpInfo);
+    Logger.mainLogger.debug('Checking existing node.', nodeId, nodeIpInfo);
     try {
       if (this.nodes.active[nodeId]) {
         Logger.mainLogger.debug(
-          "Found existing active node with same nodeId",
+          'Found existing active node with same nodeId',
           nodeId
         );
         return this.nodes.active[nodeId];
       } else {
-        for (let id in this.nodes.active) {
-          let report = this.nodes.active[id];
+        for (const id in this.nodes.active) {
+          const report = this.nodes.active[id];
           if (
             report.nodeIpInfo.externalIp === nodeIpInfo.externalIp &&
             report.nodeIpInfo.externalPort === nodeIpInfo.externalPort
@@ -83,28 +86,28 @@ export class Node {
         }
       }
     } catch (e) {
-      Logger.mainLogger.error("Error while checking active node", e);
+      Logger.mainLogger.error('Error while checking active node', e);
     }
-    Logger.mainLogger.debug("No existing active node found.");
+    Logger.mainLogger.debug('No existing active node found.');
     return;
   }
 
   getExistingSyncingNode(nodeId: string, nodeIpInfo: NodeIpInfo): SyncReport {
     Logger.mainLogger.debug(
-      "Checking existing syncing node.",
+      'Checking existing syncing node.',
       nodeId,
       nodeIpInfo
     );
     try {
       if (this.nodes.syncing[nodeId]) {
         Logger.mainLogger.debug(
-          "Found existing syncing node with same nodeId",
+          'Found existing syncing node with same nodeId',
           nodeId
         );
         return this.nodes.syncing[nodeId];
       } else {
-        for (let id in this.nodes.syncing) {
-          let report = this.nodes.syncing[id];
+        for (const id in this.nodes.syncing) {
+          const report = this.nodes.syncing[id];
           if (
             report.nodeIpInfo.externalIp === nodeIpInfo.externalIp &&
             report.nodeIpInfo.externalPort === nodeIpInfo.externalPort
@@ -114,25 +117,25 @@ export class Node {
         }
       }
     } catch (e) {
-      Logger.mainLogger.error("Error while chcking syncing node", e);
+      Logger.mainLogger.error('Error while chcking syncing node', e);
     }
-    Logger.mainLogger.debug("No existing syncing node found.");
+    Logger.mainLogger.debug('No existing syncing node found.');
     return;
   }
 
   joined(publicKey: string, nodeId: string, nodeIpInfo: NodeIpInfo): void {
     if (this.nodes.joining[publicKey]) delete this.nodes.joining[publicKey];
-    let existingSyncingNode = this.getExistingSyncingNode(nodeId, nodeIpInfo);
-    let existingActiveNode = this.getExistingActiveNode(nodeId, nodeIpInfo);
+    const existingSyncingNode = this.getExistingSyncingNode(nodeId, nodeIpInfo);
+    const existingActiveNode = this.getExistingActiveNode(nodeId, nodeIpInfo);
     if (existingSyncingNode) {
       delete this.nodes.syncing[existingSyncingNode.nodeId];
       Logger.mainLogger.info(
-        `Joined node is found in the syncing list. Removing existing syncing node.`
+        'Joined node is found in the syncing list. Removing existing syncing node.'
       );
     }
     if (existingActiveNode) {
       Logger.mainLogger.info(
-        `Joined node is found in the active list. Comparing the timestamps...`
+        'Joined node is found in the active list. Comparing the timestamps...'
       );
       // checking if last heart beat of active node is sent within last x seconds (report interval)
       if (
@@ -178,8 +181,8 @@ export class Node {
   }
 
   checkCrashedBefore(data) {
-    let foundInCrashed = Object.values(this.crashedNodes).find(
-      (node) =>
+    const foundInCrashed = Object.values(this.crashedNodes).find(
+      node =>
         node.nodeIpInfo.externalIp === data.nodeIpInfo.externalIp &&
         node.nodeIpInfo.externalPort === data.nodeIpInfo.externalPort
     );
@@ -196,7 +199,7 @@ export class Node {
   }
 
   removed(nodeId: string): void {
-    let removedNode = this.nodes.active[nodeId];
+    const removedNode = this.nodes.active[nodeId];
     if (removedNode) {
       if (!this.removedNodes[this.counter]) {
         this.removedNodes[this.counter] = {};
@@ -222,7 +225,7 @@ export class Node {
   heartbeat(nodeId: string, data): void {
     // Logger.historyLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, Ip: ${data.nodeIpInfo.externalIp}, Port: ${data.nodeIpInfo.externalPort}`)
     // Logger.mainLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, ${JSON.stringify(data)}`)
-    ProfilerModule.profilerInstance.profileSectionStart("heartbeat");
+    ProfilerModule.profilerInstance.profileSectionStart('heartbeat');
     if (this.nodes.syncing[nodeId]) {
       Logger.mainLogger.debug(
         `Found heart beating node ${nodeId} in syncing list. Removing it from syncing list.`
@@ -282,14 +285,14 @@ export class Node {
 
     // this.avgApplied += (data.txInjected - data.txRejected - data.txExpired)
     // writeStream.write(JSON.stringify(this.nodes.active[nodeId], null, 2) + '\n')
-    ProfilerModule.profilerInstance.profileSectionEnd("heartbeat");
+    ProfilerModule.profilerInstance.profileSectionEnd('heartbeat');
   }
 
   updateAvgAndMaxTps() {
-    ProfilerModule.profilerInstance.profileSectionStart("updateAvgAndMaxTps");
+    ProfilerModule.profilerInstance.profileSectionStart('updateAvgAndMaxTps');
     let diffRatio = 0;
     if (Object.keys(this.nodes.active).length === 0) return;
-    let newAvgTps = Math.round(
+    const newAvgTps = Math.round(
       (this.totalProcessed - this.lastTotalProcessed) /
         (this.reportInterval / 1000)
     );
@@ -305,17 +308,17 @@ export class Node {
     setTimeout(() => {
       this.updateAvgAndMaxTps();
     }, this.reportInterval);
-    ProfilerModule.profilerInstance.profileSectionEnd("updateAvgAndMaxTps");
+    ProfilerModule.profilerInstance.profileSectionEnd('updateAvgAndMaxTps');
   }
 
   checkDeadOrAlive() {
-    ProfilerModule.profilerInstance.profileSectionStart("checkDeadOrAlive");
-    for (let nodeId in this.nodes.active) {
+    ProfilerModule.profilerInstance.profileSectionStart('checkDeadOrAlive');
+    for (const nodeId in this.nodes.active) {
       if (this.nodes.active[nodeId].timestamp < Date.now() - this.crashTimout) {
         this.nodes.active[nodeId].crashed = true;
         this.history[nodeId].crashed = this.nodes.active[nodeId].timestamp;
         if (!this.crashedNodes[nodeId]) {
-          let data = this.nodes.active[nodeId];
+          const data = this.nodes.active[nodeId];
           this.crashedNodes[nodeId] = data;
           Logger.historyLogger.info(
             `NODE DEAD, NodeId: ${nodeId}, Ip: ${data.nodeIpInfo.externalIp}, Port: ${data.nodeIpInfo.externalPort}`
@@ -325,7 +328,7 @@ export class Node {
         this.nodes.active[nodeId].crashed = false;
       }
     }
-    ProfilerModule.profilerInstance.profileSectionEnd("checkDeadOrAlive");
+    ProfilerModule.profilerInstance.profileSectionEnd('checkDeadOrAlive');
   }
 
   getHistory() {
@@ -335,19 +338,38 @@ export class Node {
   getRemoved() {
     const start = this.counter >= 3 ? this.counter - 3 : 0;
     const end = this.counter;
-    let recentRemovedNodes = this.removedNodes.filter(
-      (n) => n.counter >= start && n.counter <= end
+    const recentRemovedNodes = this.removedNodes.filter(
+      n => n.counter >= start && n.counter <= end
     );
     return recentRemovedNodes;
   }
 
+  resetRareCounters() {
+    this.rareEventCounters = {};
+    const responses = [];
+    for (const nodeId in this.nodes.active) {
+      try {
+        const nodeIpInfo = this.nodes.active[nodeId].nodeIpInfo;
+        axios.get(
+          `httP://${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort}/rare-counts-reset`
+        );
+      } catch (e) {
+        Logger.errorLogger.error(
+          'Unable to reset rare counters for',
+          nodeId,
+          e
+        );
+      }
+    }
+  }
+
   getRareEventCounters(shouldAggregate) {
-    let str = ``;
+    let str = '';
     if (shouldAggregate) {
-      let aggregatedCounter = {};
-      for (let nodeId in this.rareEventCounters) {
-        let counterMap = this.rareEventCounters[nodeId];
-        for (let key in counterMap) {
+      const aggregatedCounter = {};
+      for (const nodeId in this.rareEventCounters) {
+        const counterMap = this.rareEventCounters[nodeId];
+        for (const key in counterMap) {
           if (aggregatedCounter[key])
             aggregatedCounter[key].count += counterMap[key].count;
           else
@@ -355,8 +377,8 @@ export class Node {
               count: counterMap[key].count,
               subCounters: {},
             };
-          let subCounterMap = counterMap[key].subCounters;
-          for (let key2 in subCounterMap) {
+          const subCounterMap = counterMap[key].subCounters;
+          for (const key2 in subCounterMap) {
             if (aggregatedCounter[key].subCounters[key2])
               aggregatedCounter[key].subCounters[key2].count +=
                 subCounterMap[key2].count;
@@ -370,15 +392,15 @@ export class Node {
       }
       return aggregatedCounter;
     } else {
-      for (let nodeId in this.rareEventCounters) {
-        let node = this.nodes.active[nodeId];
+      for (const nodeId in this.rareEventCounters) {
+        const node = this.nodes.active[nodeId];
         if (!node) continue;
         str += `<p><a target="_blank" href="/log?ip=${node.nodeIpInfo.externalIp}&port=${node.nodeIpInfo.externalPort}">${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}</a></p>`;
-        let counterMap = this.rareEventCounters[nodeId];
-        for (let key in counterMap) {
+        const counterMap = this.rareEventCounters[nodeId];
+        for (const key in counterMap) {
           str += `<p>&emsp; ${key} &emsp; ${counterMap[key].count}</p>`;
-          let subCounterMap = counterMap[key].subCounters;
-          for (let key2 in subCounterMap) {
+          const subCounterMap = counterMap[key].subCounters;
+          for (const key2 in subCounterMap) {
             str += `<p>&emsp; &emsp; ${key2} &emsp; ${subCounterMap[key2].count}</p>`;
           }
         }
@@ -388,15 +410,15 @@ export class Node {
   }
 
   report(lastTimestamp?: number): Report {
-    ProfilerModule.profilerInstance.profileSectionStart("GET_report");
+    ProfilerModule.profilerInstance.profileSectionStart('GET_report');
     if (lastTimestamp) {
-      let updatedNodes = {};
-      for (let nodeId in this.nodes.active) {
+      const updatedNodes = {};
+      for (const nodeId in this.nodes.active) {
         if (this.nodes.active[nodeId].timestamp > lastTimestamp) {
           updatedNodes[nodeId] = this.nodes.active[nodeId];
         }
       }
-      for (let nodeId in this.crashedNodes) {
+      for (const nodeId in this.crashedNodes) {
         updatedNodes[nodeId] = this.crashedNodes[nodeId];
       }
       return {
@@ -414,7 +436,7 @@ export class Node {
         timestamp: Date.now(),
       };
     } else {
-      ProfilerModule.profilerInstance.profileSectionEnd("GET_report");
+      ProfilerModule.profilerInstance.profileSectionEnd('GET_report');
       return {
         nodes: this.nodes,
         totalInjected: this.totalTxInjected,
@@ -433,8 +455,8 @@ export class Node {
   }
 
   getScaleReports() {
-    let scaleReports = [];
-    for (let nodeId in this.nodes.active) {
+    const scaleReports = [];
+    for (const nodeId in this.nodes.active) {
       const data = this.nodes.active[nodeId] as ActiveReport;
       scaleReports.push({
         nodeId,
@@ -456,7 +478,7 @@ export class Node {
   }
 
   flush() {
-    console.log("Flushing report");
+    console.log('Flushing report');
     this.nodes = this._createEmptyNodelist();
     this.totalTxInjected = 0;
     this.totalTxRejected = 0;

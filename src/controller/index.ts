@@ -3,6 +3,7 @@ const joined = require("./joined");
 const active = require("./active");
 const removed = require("./removed");
 const rareCounter = require("./rareCounter");
+const resetRareCounter = require("./resetRareCounter");
 const getRemoved = require("./getRemoved");
 const heartbeat = require("./heartbeat");
 const report = require("./report");
@@ -28,4 +29,5 @@ export const Controller = {
   mock,
   getRemoved,
   rareCounter,
+  resetRareCounter,
 };

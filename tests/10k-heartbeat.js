@@ -1,9 +1,10 @@
 const {generateNodeForTesting} = require('../build/src/class/mock')
 const axios = require('axios')
 
-const monitorServerIp = '127.0.0.1'
+const monitorServerIp = '208.110.82.50'
+// const monitorServerIp = 'localhost'
 const monitorServerPort = 3000
-const consensorCount = 1000
+const consensorCount = 100
 const heartbeatInterval = 30000
 
 const nodes = generateNodeForTesting(consensorCount)
@@ -16,11 +17,15 @@ async function sendHeartbeat() {
         const nodeId = n.nodeId
         return {nodeId, data}
     })
+    console.log("Created reports to send.")
     for (let report of updatedNodes) {
-        const res = await axios.post(`http://${monitorServerIp}:${monitorServerPort}/api/heartbeat`, report)
-        console.log(res.data)
+        console.time('heartbeat')
+        axios.post(`http://${monitorServerIp}:${monitorServerPort}/api/heartbeat`, report)
+        console.timeEnd('heartbeat')
     }
     counter += 1
 }
+
+sendHeartbeat()
 
 setInterval(sendHeartbeat, heartbeatInterval)
