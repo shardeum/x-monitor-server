@@ -1,5 +1,5 @@
 # Node.js LTS 10.x.x from Docker Hub
-FROM node:12
+FROM node:16
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -17,5 +17,6 @@ COPY . .
 # Note: ports can be exposed at runtime too with --expose or -p <port>:<port>
 EXPOSE 3000
 
+RUN npm run compile
 # Define run command
-CMD [ "node", "server.js" ]
+CMD [ "node", "build/src/server.js" ]
