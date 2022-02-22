@@ -1,4 +1,4 @@
-{
+export default {
   "saveConsoleOutput": true,
   "dir": "monitor-logs",
   "files": { "main": "", "history": "", "errorFile": "" },

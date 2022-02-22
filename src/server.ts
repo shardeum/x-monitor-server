@@ -1,4 +1,11 @@
+import { join } from "path/posix";
 import { Node } from "./class/node";
+import MemoryModule, {
+  memoryReportingInstance
+} from "./class/profiler/MemoryReporting";
+import NestedCounters from "./class/profiler/nestedCounters";
+import Profiler from "./class/profiler/profiler";
+import Statistics from "./class/profiler/Statistics";
 
 require("dotenv").config();
 
@@ -18,12 +25,6 @@ const path = require("path");
 const fs = require("fs");
 const rfs = require("rotating-file-stream");
 import Logger = require("./class/logger");
-import MemoryModule, {
-  memoryReportingInstance,
-} from "./class/profiler/MemoryReporting";
-import Statistics from "./class/profiler/Statistics";
-import Profiler from "./class/profiler/profiler";
-import NestedCounters from "./class/profiler/nestedCounters";
 const app = express();
 
 const logDirectory = path.join(__dirname, "req-log");
@@ -31,7 +32,7 @@ const clientModule = require.resolve("monitor-client");
 const clientDirectory = path.dirname(clientModule);
 const viewDirectory = path.join(clientDirectory + "/");
 const staticDirectory = path.resolve(clientDirectory + "/");
-const logsConfig = require("../../monitor-log.json");
+import logsConfig from './config/monitor-log';
 const logDir = `monitor-logs`;
 const baseDir = ".";
 logsConfig.dir = logDir;
