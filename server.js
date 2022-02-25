@@ -19,7 +19,7 @@ const Logger = require('./class/logger')
 const app = express()
 
 const logDirectory = path.join(__dirname, 'req-log')
-const clientModule = require.resolve('monitor-client')
+const clientModule = require.resolve('@shardus/monitor-client')
 const clientDirectory = path.dirname(clientModule)
 const viewDirectory = path.join(clientDirectory + '/')
 const staticDirectory = path.resolve(clientDirectory + '/')
@@ -207,7 +207,7 @@ app.get('/summary', async (req, res) => {
       console.log('reload')
       window.location.reload(true)
     }, 10000)
-  </script> 
+  </script>
 </html>
 `
 
