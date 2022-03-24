@@ -21,7 +21,7 @@
     "monitor-server": "./bin/monitor-server"
   },
   "dependencies": {
-    "@shardus/monitor-client": "^2.0.1",
+    "@shardus/monitor-client": "^2.1.1",
     "body-parser": "^1.18.3",
     "compression": "^1.7.3",
     "cookie-parser": "^1.4.3",
