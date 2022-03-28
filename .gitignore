@@ -21,4 +21,5 @@ node_modules
 .DS_Store
 npm-debug.log
 ./req-log
-build
+build/
+monitor-logs/
