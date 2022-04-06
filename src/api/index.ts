@@ -12,6 +12,7 @@ router.get('/flush', Controller.flush);
 router.get('/history', Controller.history);
 router.get('/rare-counter', Controller.rareCounter);
 router.get('/reset-rare-counter', Controller.resetRareCounter);
+router.get('/tx-coverage', Controller.getTxCoverage);
 router.get('/mock', Controller.mock);
 
 router.post(

@@ -28,7 +28,6 @@ class MemoryReporting {
         this.report = [];
         this.server = server;
         this.lastCPUTimes = this.getCPUTimes();
-        console.log("this", this);
     }
 
     registerEndpoints() {
@@ -119,8 +118,6 @@ class MemoryReporting {
 
     cpuPercent() {
         let currentTimes = this.getCPUTimes();
-        console.log('Current CPU times', currentTimes)
-
         let deltaTimes = [];
         let percentTimes = [];
 
@@ -145,9 +142,9 @@ class MemoryReporting {
         }
 
         this.lastCPUTimes = currentTimes;
-        console.log('Percent total', percentTotal)
-        console.log('Current times length', currentTimes.length)
-        console.log('CPU percent', percentTotal * 100 / currentTimes.length)
+        // console.log('Percent total', percentTotal)
+        // console.log('Current times length', currentTimes.length)
+        // console.log('CPU percent', percentTotal * 100 / currentTimes.length)
         return percentTotal / currentTimes.length;
     }
 

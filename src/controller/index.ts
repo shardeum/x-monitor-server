@@ -10,6 +10,7 @@ const report = require("./report");
 const flush = require("./flush");
 const syncReport = require("./syncReport");
 const getSyncReports = require("./getSyncReports");
+const getTxCoverage = require("./txCoverage");
 const history = require("./history");
 const getScaleReports = require("./getScaleReports");
 const mock = require("./mock");
@@ -24,6 +25,7 @@ export const Controller = {
   flush,
   syncReport,
   getSyncReports,
+  getTxCoverage,
   history,
   getScaleReports,
   mock,

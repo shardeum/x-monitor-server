@@ -83,6 +83,7 @@ export interface ActiveReport {
   txProcessed: number;
   reportInterval: number;
   nodeIpInfo: NodeIpInfo;
+  txCoverage: any,
   partitionReport:
     | {}
     | {

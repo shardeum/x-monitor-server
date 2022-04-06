@@ -12,6 +12,12 @@ import {
   CrashNodes,
 } from '../interface/interface';
 
+type TxCoverageData = {
+  txId: string,
+  count: number,
+  timestamp: number
+}
+
 export class Node {
   totalTxInjected: number;
   totalTxRejected: number;
@@ -31,6 +37,8 @@ export class Node {
   history: {};
   counter: number;
   rareEventCounters = {};
+  txCoverageMap: {[key: string]: TxCoverageData}
+  txCoverageCounter: {[key: string]: number}
 
   constructor() {
     this.totalTxInjected = 0;
@@ -51,6 +59,9 @@ export class Node {
     this.history = {};
     this.counter = 0;
     this.rareEventCounters = {};
+    this.txCoverageMap = {}
+    this.txCoverageCounter = {}
+    setInterval(this.summarizeTxCoverage.bind(this), 10000)
   }
 
   private _createEmptyNodelist(): NodeList {
@@ -222,6 +233,43 @@ export class Node {
     this.syncStatements[nodeId] = syncStatement;
   }
 
+  processTxCoverage(txCoverage) {
+    for (const txId in txCoverage) {
+      if (this.txCoverageMap[txId]) {
+        this.txCoverageMap[txId].count += 1
+        this.txCoverageMap[txId].timestamp = Date.now()
+      } else {
+
+        this.txCoverageMap[txId] = {
+          txId: String(txId),
+          count: 1,
+          timestamp: Date.now()
+        } as TxCoverageData
+      }
+    }
+  }
+
+  summarizeTxCoverage() {
+    let now = Date.now()
+    // process txs which are 1 cycle old
+    let readyTxs: TxCoverageData[] = Object.values(this.txCoverageMap).filter((data: TxCoverageData) => now - data.timestamp > 60000)
+
+    for (let tx of readyTxs) {
+      if (this.txCoverageCounter[tx.count]) {
+        this.txCoverageCounter[String(tx.count)] += 1
+      } else {
+        this.txCoverageCounter[String(tx.count)] = 1
+      }
+      delete this.txCoverageMap[tx.txId]
+    }
+  }
+
+  getTxCoverage() {
+    return {
+      txCoverageCounter: this.txCoverageCounter
+    }
+  }
+
   heartbeat(nodeId: string, data): void {
     // Logger.historyLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, Ip: ${data.nodeIpInfo.externalIp}, Port: ${data.nodeIpInfo.externalPort}`)
     // Logger.mainLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, ${JSON.stringify(data)}`)
@@ -233,6 +281,8 @@ export class Node {
       delete this.nodes.syncing[nodeId];
     }
     this.nodes.active[nodeId] = data;
+    this.processTxCoverage(data.txCoverage)
+    delete this.nodes.active[nodeId].txCoverage
     this.nodes.active[nodeId].nodeId = nodeId;
     this.nodes.active[nodeId].timestamp = Date.now();
     this.nodes.active[nodeId].crashed = false;
