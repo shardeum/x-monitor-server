@@ -1,3 +1,5 @@
+import { UserDB } from './class/user'
+global.User = new UserDB()
 import { join } from "path/posix";
 import { Node } from "./class/node";
 import MemoryModule, {
@@ -30,8 +32,10 @@ const app = express();
 const logDirectory = path.join(__dirname, "req-log");
 const clientModule = require.resolve("@shardus/monitor-client");
 const clientDirectory = path.dirname(clientModule);
-const viewDirectory = path.join(clientDirectory + "/");
-const staticDirectory = path.resolve(clientDirectory + "/");
+const viewDirectory = path.join(clientDirectory + "/views");
+const staticDirectory = path.resolve(clientDirectory + "/public");
+
+console.log("Client directory", clientDirectory)
 import logsConfig from './config/monitor-log';
 const logDir = `monitor-logs`;
 const baseDir = ".";
@@ -53,7 +57,7 @@ http.get[promisify.custom] = function getAsync(options) {
         resolve(response);
       })
       .on("error", reject);
-  });
+ });
 };
 const get = promisify(http.get);
 
@@ -70,7 +74,8 @@ async function getJSON(url) {
 const APIRoutes = require("./api");
 
 // config variables
-const CONFIG = require("./config");
+const CONFIG = require("./config").default
+console.log("CONFIG", CONFIG)
 if (process.env.PORT) {
   CONFIG.port = process.env.PORT;
 }
@@ -138,21 +143,33 @@ app.use(methodOverride());
 app.use(helmet());
 app.use(cors());
 
+global.User.create({
+  username: CONFIG.username,
+  password: CONFIG.password
+})
+
 app.get("/", (req, res) => {
   res.render("index.html", { title: "test" });
+});
+app.get("/signin", (req, res) => {
+  res.render("signin.html", { title: "test" });
 });
 app.get("/log", (req, res) => {
   console.log("log server page");
   res.render("log.html", { title: "test" });
 });
 
-app.get("/history-log", (req, res) => {
-  console.log("log server page");
-  res.render("history-log.html", { title: "test" });
-});
+// app.get("/history-log", (req, res) => {
+//   console.log("log server page");
+//   res.render("history-log.html", { title: "test" });
+// });
 
 app.get("/large-network", (req, res) => {
   res.render("large-network.html");
+});
+
+app.get("/chart", (req, res) => {
+  res.render("chart.html");
 });
 
 app.get("/summary", async (req, res) => {
