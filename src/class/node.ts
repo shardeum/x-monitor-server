@@ -32,7 +32,7 @@ export class Node {
   crashTimout: number;
   lostNodeIds: Map<string, boolean>;
   syncStatements: {};
-  removedNodes: any[];
+  removedNodes: {};
   crashedNodes: {[key: string]: CrashNodes};
   history: {};
   counter: number;
@@ -54,7 +54,7 @@ export class Node {
     this.crashTimout = 60000;
     this.lostNodeIds = new Map();
     this.syncStatements = {};
-    this.removedNodes = [];
+    this.removedNodes = {};
     this.crashedNodes = {};
     this.history = {};
     this.counter = 0;
@@ -213,9 +213,9 @@ export class Node {
     const removedNode = this.nodes.active[nodeId];
     if (removedNode) {
       if (!this.removedNodes[this.counter]) {
-        this.removedNodes[this.counter] = {};
+        this.removedNodes[this.counter] = [];
       }
-      this.removedNodes.push({
+      this.removedNodes[this.counter].push({
         ip: removedNode.nodeIpInfo.externalIp,
         port: removedNode.nodeIpInfo.externalPort,
         nodeId,
@@ -227,6 +227,12 @@ export class Node {
       );
     }
     delete this.nodes.active[nodeId];
+    // clean old removed nodes to prevent memory leak
+    for (let counter in this.removedNodes) {
+      if (parseInt(counter) + 5 < this.counter) {
+        delete this.removedNodes[counter]
+      }
+    }
   }
 
   syncReport(nodeId, syncStatement) {
@@ -388,9 +394,11 @@ export class Node {
   getRemoved() {
     const start = this.counter >= 3 ? this.counter - 3 : 0;
     const end = this.counter;
-    const recentRemovedNodes = this.removedNodes.filter(
-      n => n.counter >= start && n.counter <= end
-    );
+    let recentRemovedNodes = []
+    for (let i = start; i <= end; i++) {
+      let nodes = this.removedNodes[i]
+      if(nodes && nodes.length > 0) recentRemovedNodes = recentRemovedNodes.concat(nodes)
+    }
     return recentRemovedNodes;
   }
 

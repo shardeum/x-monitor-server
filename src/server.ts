@@ -182,7 +182,7 @@ app.get("/summary", async (req, res) => {
   const joining = global.node.nodes["joining"]; // { [id: string]: { nodeIpInfo: {...} } }
   const syncing = global.node.nodes["syncing"]; // { [id: string]: { nodeIpInfo: {...} } }
   const active = global.node.nodes["active"]; // { [id: string]: { nodeIpInfo: {...} } }
-  const removed = global.node.removedNodes;
+  const removed = global.node.removedNodes[global.node.counter - 1] || []
   const node =
     Object.values(active)[0] ||
     Object.values(syncing)[0] ||
