@@ -33,12 +33,12 @@ export class Node {
   lostNodeIds: Map<string, boolean>;
   syncStatements: {};
   removedNodes: {};
-  crashedNodes: {[key: string]: CrashNodes};
+  crashedNodes: { [key: string]: CrashNodes };
   history: {};
   counter: number;
   rareEventCounters = {};
-  txCoverageMap: {[key: string]: TxCoverageData}
-  txCoverageCounter: {[key: string]: number}
+  txCoverageMap: { [key: string]: TxCoverageData }
+  txCoverageCounter: { [key: string]: number }
 
   constructor() {
     this.totalTxInjected = 0;
@@ -74,6 +74,13 @@ export class Node {
 
   joining(publicKey: string, nodeIpInfo: NodeIpInfo): void {
     this.nodes.joining[publicKey] = {nodeIpInfo};
+    const existingSyncingNode = this.getExistingSyncingNode('', nodeIpInfo);
+    if (existingSyncingNode) {
+      delete this.nodes.syncing[existingSyncingNode.nodeId];
+      Logger.mainLogger.info(
+        'Joining node is found in the syncing list. Removing existing syncing node.'
+      );
+    }
   }
 
   getExistingActiveNode(nodeId: string, nodeIpInfo: NodeIpInfo): ActiveReport {
@@ -350,7 +357,7 @@ export class Node {
     if (Object.keys(this.nodes.active).length === 0) return;
     const newAvgTps = Math.round(
       (this.totalProcessed - this.lastTotalProcessed) /
-        (this.reportInterval / 1000)
+      (this.reportInterval / 1000)
     );
     if (this.avgTps > 0) diffRatio = (newAvgTps - this.avgTps) / this.avgTps;
     if (diffRatio < 1.5 || diffRatio > 0.5) {
@@ -397,7 +404,7 @@ export class Node {
     let recentRemovedNodes = []
     for (let i = start; i <= end; i++) {
       let nodes = this.removedNodes[i]
-      if(nodes && nodes.length > 0) recentRemovedNodes = recentRemovedNodes.concat(nodes)
+      if (nodes && nodes.length > 0) recentRemovedNodes = recentRemovedNodes.concat(nodes)
     }
     return recentRemovedNodes;
   }
