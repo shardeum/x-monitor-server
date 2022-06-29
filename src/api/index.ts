@@ -31,8 +31,8 @@ router.get('/scale-report',  requireAuthInProduction, Controller.getScaleReports
 router.get('/removed',  requireAuthInProduction, Controller.getRemoved);
 router.get('/flush',  requireAuthInProduction, Controller.flush);
 router.get('/history',  requireAuthInProduction, Controller.history);
-router.get('/rare-counter',  requireAuthInProduction, Controller.rareCounter);
-router.get('/reset-rare-counter',  requireAuthInProduction, Controller.resetRareCounter);
+router.get('/rare-counter', Controller.rareCounter);
+router.get('/reset-rare-counter', Controller.resetRareCounter);
 router.get('/tx-coverage',  requireAuthInProduction, Controller.getTxCoverage);
 router.get('/mock',  requireAuthInProduction, Controller.mock);
 router.get('/status',  (req, res) => {
