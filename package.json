@@ -1,6 +1,6 @@
 {
   "name": "@shardus/monitor-server",
-  "version": "2.0.9",
+  "version": "2.1.0",
   "description": "Monitor server for the Shardus Enterprise server.",
   "main": "build/src/server.js",
   "types": "build/src/server.d.ts",
