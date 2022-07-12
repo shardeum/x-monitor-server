@@ -142,60 +142,67 @@ export class Node {
   }
 
   joined(publicKey: string, nodeId: string, nodeIpInfo: NodeIpInfo): void {
-    if (this.nodes.joining[publicKey]) delete this.nodes.joining[publicKey];
-    const existingSyncingNode = this.getExistingSyncingNode(nodeId, nodeIpInfo);
-    const existingActiveNode = this.getExistingActiveNode(nodeId, nodeIpInfo);
-    if (existingSyncingNode) {
-      delete this.nodes.syncing[existingSyncingNode.nodeId];
-      Logger.mainLogger.info(
-        'Joined node is found in the syncing list. Removing existing syncing node.'
-      );
-    }
-    if (existingActiveNode) {
-      Logger.mainLogger.info(
-        'Joined node is found in the active list. Comparing the timestamps...'
-      );
-      // checking if last heart beat of active node is sent within last x seconds (report interval)
-      if (
-        Date.now() - existingActiveNode.timestamp <
-        1.5 * this.reportInterval
-      ) {
+    try {
+      const existingSyncingNode = this.getExistingSyncingNode(nodeId, nodeIpInfo);
+      const existingActiveNode = this.getExistingActiveNode(nodeId, nodeIpInfo);
+      if (existingSyncingNode) {
+        delete this.nodes.syncing[existingSyncingNode.nodeId];
         Logger.mainLogger.info(
-          `This node ${existingActiveNode.nodeId} sent heartbeat recently. So, this joined message is neglected.`
+          'Joined node is found in the syncing list. Removing existing syncing node.'
         );
-        return; // not likely that active node will re-join the network again in a report interval
       }
-      Logger.mainLogger.info(
-        `This node ${existingActiveNode.nodeId} does not sent heartbeat recently. So, this joined message is processed.`
+      if (existingActiveNode) {
+        Logger.mainLogger.info(
+          'Joined node is found in the active list. Comparing the timestamps...'
+        );
+        // checking if last heart beat of active node is sent within last x seconds (report interval)
+        if (
+          Date.now() - existingActiveNode.timestamp <
+          1.5 * this.reportInterval
+        ) {
+          Logger.mainLogger.info(
+            `This node ${existingActiveNode.nodeId} sent heartbeat recently. So, this joined message is neglected.`
+          );
+          return; // not likely that active node will re-join the network again in a report interval
+        }
+        Logger.mainLogger.info(
+          `This node ${existingActiveNode.nodeId} does not sent heartbeat recently. So, this joined message is processed.`
+        );
+        delete this.nodes.active[existingActiveNode.nodeId];
+      }
+      this.nodes.syncing[nodeId] = {
+        publicKey,
+        nodeId,
+        nodeIpInfo,
+        timestamp: Date.now(),
+      };
+      if (!this.history[nodeId]) this.history[nodeId] = {};
+      this.history[nodeId].joined = Date.now();
+      this.history[nodeId].data = {
+        nodeIpInfo,
+        nodeId,
+      };
+      this.checkCrashedBefore(this.history[nodeId].data);
+      Logger.historyLogger.info(
+        `NODE JOINED, NodeId: ${nodeId}, Ip: ${nodeIpInfo.externalIp}, Port: ${nodeIpInfo.externalPort}`
       );
-      delete this.nodes.active[existingActiveNode.nodeId];
+    } catch (e) {
+      Logger.mainLogger.error(e)
     }
-    this.nodes.syncing[nodeId] = {
-      publicKey,
-      nodeId,
-      nodeIpInfo,
-      timestamp: Date.now(),
-    };
-    if (!this.history[nodeId]) this.history[nodeId] = {};
-    this.history[nodeId].joined = Date.now();
-    this.history[nodeId].data = {
-      nodeIpInfo,
-      nodeId,
-    };
-    this.checkCrashedBefore(this.history[nodeId].data);
-    Logger.historyLogger.info(
-      `NODE JOINED, NodeId: ${nodeId}, Ip: ${nodeIpInfo.externalIp}, Port: ${nodeIpInfo.externalPort}`
-    );
   }
 
   active(nodeId: string): void {
-    delete this.nodes.syncing[nodeId];
-    this.nodes.active[nodeId] = {} as ActiveReport;
-    this.history[nodeId].active = Date.now();
-    const nodeData = this.history[nodeId].data;
-    Logger.historyLogger.info(
-      `NODE ACTIVE, NodeId: ${nodeId}, Ip: ${nodeData.nodeIpInfo.externalIp}, Port: ${nodeData.nodeIpInfo.externalPort}`
-    );
+    try {
+      delete this.nodes.syncing[nodeId];
+      this.nodes.active[nodeId] = {} as ActiveReport;
+      this.history[nodeId].active = Date.now();
+      const nodeData = this.history[nodeId].data;
+      Logger.historyLogger.info(
+        `NODE ACTIVE, NodeId: ${nodeId}, Ip: ${nodeData.nodeIpInfo.externalIp}, Port: ${nodeData.nodeIpInfo.externalPort}`
+      );
+    } catch (e) {
+      Logger.mainLogger.error(e)
+    }
   }
 
   checkCrashedBefore(data) {
@@ -217,28 +224,32 @@ export class Node {
   }
 
   removed(nodeId: string): void {
-    const removedNode = this.nodes.active[nodeId];
-    if (removedNode) {
-      if (!this.removedNodes[this.counter]) {
-        this.removedNodes[this.counter] = [];
+    try {
+      const removedNode = this.nodes.active[nodeId];
+      if (removedNode) {
+        if (!this.removedNodes[this.counter]) {
+          this.removedNodes[this.counter] = [];
+        }
+        this.removedNodes[this.counter].push({
+          ip: removedNode.nodeIpInfo.externalIp,
+          port: removedNode.nodeIpInfo.externalPort,
+          nodeId,
+          counter: this.counter,
+        });
+        if (this.history[nodeId]) this.history[nodeId].removed = Date.now();
+        Logger.historyLogger.info(
+          `NODE REMOVED, NodeId: ${nodeId}, Ip: ${removedNode.nodeIpInfo.externalIp}, Port: ${removedNode.nodeIpInfo.externalPort}`
+        );
       }
-      this.removedNodes[this.counter].push({
-        ip: removedNode.nodeIpInfo.externalIp,
-        port: removedNode.nodeIpInfo.externalPort,
-        nodeId,
-        counter: this.counter,
-      });
-      if (this.history[nodeId]) this.history[nodeId].removed = Date.now();
-      Logger.historyLogger.info(
-        `NODE REMOVED, NodeId: ${nodeId}, Ip: ${removedNode.nodeIpInfo.externalIp}, Port: ${removedNode.nodeIpInfo.externalPort}`
-      );
-    }
-    delete this.nodes.active[nodeId];
-    // clean old removed nodes to prevent memory leak
-    for (let counter in this.removedNodes) {
-      if (parseInt(counter) + 5 < this.counter) {
-        delete this.removedNodes[counter]
+      delete this.nodes.active[nodeId];
+      // clean old removed nodes to prevent memory leak
+      for (let counter in this.removedNodes) {
+        if (parseInt(counter) + 5 < this.counter) {
+          delete this.removedNodes[counter]
+        }
       }
+    } catch (e) {
+      Logger.mainLogger.error(e)
     }
   }
 
@@ -294,7 +305,7 @@ export class Node {
       delete this.nodes.syncing[nodeId];
     }
     this.nodes.active[nodeId] = data;
-    this.processTxCoverage(data.txCoverage)
+    // this.processTxCoverage(data.txCoverage)
     delete this.nodes.active[nodeId].txCoverage
     this.nodes.active[nodeId].nodeId = nodeId;
     this.nodes.active[nodeId].timestamp = Date.now();

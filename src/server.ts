@@ -1,7 +1,8 @@
-import { UserDB } from './class/user'
+import {UserDB} from './class/user'
+
 global.User = new UserDB()
-import { join } from "path/posix";
-import { Node } from "./class/node";
+import {join} from "path/posix";
+import {Node} from "./class/node";
 import MemoryModule, {
   memoryReportingInstance
 } from "./class/profiler/MemoryReporting";
@@ -11,7 +12,7 @@ import Statistics from "./class/profiler/Statistics";
 
 require("dotenv").config();
 
-const { promisify } = require("util");
+const {promisify} = require("util");
 const http = require("http");
 const WebSocket = require("ws");
 const Tail = require("tail").Tail;
@@ -27,6 +28,7 @@ const path = require("path");
 const fs = require("fs");
 const rfs = require("rotating-file-stream");
 import Logger = require("./class/logger");
+
 const app = express();
 
 const logDirectory = path.join(__dirname, "req-log");
@@ -37,13 +39,15 @@ const staticDirectory = path.resolve(clientDirectory + "/public");
 
 console.log("Client directory", clientDirectory)
 import logsConfig from './config/monitor-log';
+import {mainLogger} from "./class/logger";
+
 const logDir = `monitor-logs`;
 const baseDir = ".";
 logsConfig.dir = logDir;
 
 let fileWatcher;
 const server = http.createServer(app);
-const { Server } = require("socket.io");
+const {Server} = require("socket.io");
 const io = new Server(server);
 let fileSubscribers = {};
 let file = `${baseDir}/${logDir}/history.log`;
@@ -57,7 +61,7 @@ http.get[promisify.custom] = function getAsync(options) {
         resolve(response);
       })
       .on("error", reject);
- });
+  });
 };
 const get = promisify(http.get);
 
@@ -130,12 +134,12 @@ let accessLogStream = rfs("access.log", {
 });
 
 //Morgan
-app.use(morgan("common", { stream: accessLogStream }));
+app.use(morgan("common", {stream: accessLogStream}));
 app.use(morgan("dev"));
 
 // Parse body params and attach them to req.body
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+app.use(bodyParser.json({limit: "50mb"}));
+app.use(bodyParser.urlencoded({limit: "50mb", extended: true}));
 
 app.use(cookieParser());
 app.use(compress());
@@ -149,14 +153,14 @@ global.User.create({
 })
 
 app.get("/", (req, res) => {
-  res.render("index.html", { title: "test" });
+  res.render("index.html", {title: "test"});
 });
 app.get("/signin", (req, res) => {
-  res.render("signin.html", { title: "test" });
+  res.render("signin.html", {title: "test"});
 });
 app.get("/log", (req, res) => {
   console.log("log server page");
-  res.render("log.html", { title: "test" });
+  res.render("log.html", {title: "test"});
 });
 
 // app.get("/history-log", (req, res) => {
@@ -173,54 +177,54 @@ app.get("/chart", (req, res) => {
 });
 
 app.get("/summary", async (req, res) => {
-  // Ping a node for the current cycle
+  try {
+    // Ping a node for the current cycle
+    let cycle: any = {};
+    let cycleUrl;
+    let configUrl;
 
-  let cycle: any = {};
-  let cycleUrl;
-  let configUrl;
-
-  const joining = global.node.nodes["joining"]; // { [id: string]: { nodeIpInfo: {...} } }
-  const syncing = global.node.nodes["syncing"]; // { [id: string]: { nodeIpInfo: {...} } }
-  const active = global.node.nodes["active"]; // { [id: string]: { nodeIpInfo: {...} } }
-  const removed = global.node.removedNodes[global.node.counter - 1] || []
-  const node =
-    Object.values(active)[0] ||
-    Object.values(syncing)[0] ||
-    Object.values(joining)[0];
-  if (node) {
-    cycleUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/sync-newest-cycle`;
-    configUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/config`;
-    try {
-      cycle = await getJSON(cycleUrl);
-      cycle = cycle.newestCycle;
-    } catch (e) {
-      console.log("Cannot get cycle from node");
+    const joining = global.node.nodes["joining"]; // { [id: string]: { nodeIpInfo: {...} } }
+    const syncing = global.node.nodes["syncing"]; // { [id: string]: { nodeIpInfo: {...} } }
+    const active = global.node.nodes["active"]; // { [id: string]: { nodeIpInfo: {...} } }
+    const removed = global.node.removedNodes[global.node.counter - 1] || []
+    const node =
+      Object.values(active)[0] ||
+      Object.values(syncing)[0] ||
+      Object.values(joining)[0];
+    if (node) {
+      cycleUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/sync-newest-cycle`;
+      configUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/config`;
+      try {
+        cycle = await getJSON(cycleUrl);
+        cycle = cycle.newestCycle;
+      } catch (e) {
+        console.log("Cannot get cycle from node");
+      }
     }
-  }
 
-  const summary = {
-    joining: [],
-    syncing: [],
-    active: [],
-  };
+    const summary = {
+      joining: [],
+      syncing: [],
+      active: [],
+    };
 
-  for (const state in summary) {
-    for (const id in global.node.nodes[state]) {
-      const ip = global.node.nodes[state][id].nodeIpInfo.externalIp;
-      const port = global.node.nodes[state][id].nodeIpInfo.externalPort;
-      const logStreamerServer = encodeURIComponent(`http://${ip}:3334`);
-      summary[state].push(
-        `<a href="log?ip=${ip}&port=${port}" target="_blank">[${ip}]</a>`
-      );
+    for (const state in summary) {
+      for (const id in global.node.nodes[state]) {
+        const ip = global.node.nodes[state][id].nodeIpInfo.externalIp;
+        const port = global.node.nodes[state][id].nodeIpInfo.externalPort;
+        const logStreamerServer = encodeURIComponent(`http://${ip}:3334`);
+        summary[state].push(
+          `<a href="log?ip=${ip}&port=${port}" target="_blank">[${ip}]</a>`
+        );
+      }
     }
-  }
 
-  let removedHtmlStr = ``;
-  for (let node of removed) {
-    removedHtmlStr += `${node.ip} `;
-  }
+    let removedHtmlStr = ``;
+    for (let node of removed) {
+      removedHtmlStr += `${node.ip} `;
+    }
 
-  const page = `<!DOCTYPE html>
+    const page = `<!DOCTYPE html>
 <html>
   <body>
     cycle: ${cycle && cycle.counter > -1 ? cycle.counter : -1}
@@ -259,8 +263,8 @@ app.get("/summary", async (req, res) => {
     <p>
       <pre>
         ${
-          cycle ? JSON.stringify(cycle, null, 2) : "Cannot get cycle from nodes"
-        }
+      cycle ? JSON.stringify(cycle, null, 2) : "Cannot get cycle from nodes"
+    }
       </pre>
     </p>
   </body>
@@ -274,8 +278,13 @@ app.get("/summary", async (req, res) => {
 </html>
 `;
 
-  res.setHeader("Content-Type", "text/html");
-  res.send(page);
+    res.setHeader("Content-Type", "text/html");
+    res.send(page);
+  } catch (e) {
+    console.error('Caught error in /summary page', e)
+    Logger.mainLogger.error(`Error while rendering /summary page`)
+    Logger.mainLogger.error(e)
+  }
 });
 
 app.use("/api", APIRoutes);
@@ -287,8 +296,9 @@ app.use((req, res, next) => {
   return next(error);
 });
 
-app.use((err, req, res, next) =>
-  res.status(err.status || 500).json({
+app.use((err, req, res, next) => {
+  Logger.mainLogger.error('Caught error in error handling middleware', err)
+  return res.status(err.status || 500).json({
     error: {
       message: err.message,
       status: err.status,
@@ -296,7 +306,13 @@ app.use((err, req, res, next) =>
     },
     status: err.status,
   })
-);
+});
+
+process.on('uncaughtException', err => {
+  console.error('There was an uncaught error', err);
+  Logger.mainLogger.error(err);
+  process.exit(1);
+});
 
 Logger.mainLogger.info(`file: ${file}`);
 Logger.mainLogger.info(`filePath: ${path.resolve(file)}`);
@@ -314,7 +330,7 @@ io.on("connection", (socket) => {
   }
   socket.on("message", (msg) => {
     if (!fileWatcher) {
-      fileWatcher = new Tail(filePath, { fromBeginning: false });
+      fileWatcher = new Tail(filePath, {fromBeginning: false});
       fileWatcher.watch();
       fileWatcher.on("line", (data) => {
         io.emit("new-history-log", data);
