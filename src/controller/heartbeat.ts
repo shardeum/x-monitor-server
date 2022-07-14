@@ -14,10 +14,6 @@ const heartbeat = (req: RequestWithBody, res: Response, next: NextFunction) => {
     if (nodeId && isReportValid) {
       let Node: Node = global.node;
       Node.heartbeat(nodeId, data);
-      let testing = true
-      if(testing) {
-        if(Math.random() > 0.5) throw new Error('thant')
-      }
       let resp = {
         received: true,
       };
