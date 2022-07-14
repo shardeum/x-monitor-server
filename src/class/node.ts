@@ -183,6 +183,7 @@ export class Node {
         nodeId,
       };
       this.checkCrashedBefore(this.history[nodeId].data);
+      if(this.nodes.joining[publicKey]) delete this.nodes.joining[publicKey]
       Logger.historyLogger.info(
         `NODE JOINED, NodeId: ${nodeId}, Ip: ${nodeIpInfo.externalIp}, Port: ${nodeIpInfo.externalPort}`
       );

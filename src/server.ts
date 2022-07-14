@@ -163,6 +163,11 @@ app.get("/log", (req, res) => {
   res.render("log.html", {title: "test"});
 });
 
+app.get("/favicon.ico", (req, res) => {
+  return res.send()
+});
+
+
 // app.get("/history-log", (req, res) => {
 //   console.log("log server page");
 //   res.render("history-log.html", { title: "test" });
@@ -291,6 +296,7 @@ app.use("/api", APIRoutes);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
+  Logger.mainLogger.error(req)
   const error = new Error("API not found!");
   error.message = "404";
   return next(error);
@@ -298,6 +304,8 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
   Logger.mainLogger.error('Caught error in error handling middleware', err)
+  Logger.mainLogger.error(req)
+
   return res.status(err.status || 500).json({
     error: {
       message: err.message,
@@ -311,7 +319,6 @@ app.use((err, req, res, next) => {
 process.on('uncaughtException', err => {
   console.error('There was an uncaught error', err);
   Logger.mainLogger.error(err);
-  process.exit(1);
 });
 
 Logger.mainLogger.info(`file: ${file}`);
