@@ -177,6 +177,10 @@ app.get("/large-network", (req, res) => {
   res.render("large-network.html");
 });
 
+app.get("/sync", (req, res) => {
+    res.render("sync.html");
+});
+
 app.get("/chart", (req, res) => {
   res.render("chart.html");
 });
