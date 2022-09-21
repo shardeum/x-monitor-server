@@ -81,10 +81,17 @@ export class Node {
         'Joining node is found in the syncing list. Removing existing syncing node.'
       );
     }
+    const existingActiveNode = this.getExistingActiveNode('', nodeIpInfo)
+    if (existingActiveNode) {
+      delete this.nodes.active[existingActiveNode.nodeId];
+      Logger.mainLogger.info(
+        'Joining node is found in the active list. Removing existing active node.'
+      );
+    }
   }
 
   getExistingActiveNode(nodeId: string, nodeIpInfo: NodeIpInfo): ActiveReport {
-    Logger.mainLogger.debug('Checking existing node.', nodeId, nodeIpInfo);
+    Logger.mainLogger.debug('Checking existing active node.', nodeId, nodeIpInfo);
     try {
       if (this.nodes.active[nodeId]) {
         Logger.mainLogger.debug(
