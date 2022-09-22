@@ -196,10 +196,7 @@ app.get("/summary", async (req, res) => {
     const syncing = global.node.nodes["syncing"]; // { [id: string]: { nodeIpInfo: {...} } }
     const active = global.node.nodes["active"]; // { [id: string]: { nodeIpInfo: {...} } }
     const removed = global.node.removedNodes[global.node.counter - 1] || []
-    const node =
-      Object.values(active)[0] ||
-      Object.values(syncing)[0] ||
-      Object.values(joining)[0];
+    const node = global.node.getRandomNode()
     if (node) {
       cycleUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/sync-newest-cycle`;
       configUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/config`;

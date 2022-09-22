@@ -428,6 +428,19 @@ export class Node {
     return recentRemovedNodes;
   }
 
+  getRandomNode() {
+    if (Object.keys(this.nodes.active).length > 0) {
+      let nodes = Object.values(this.nodes.active)
+      let activeNodes = nodes.filter(node => node.crashed === false)
+      let index = Math.floor(Math.random() * activeNodes.length)
+      return activeNodes[index]
+    } else if (Object.keys(this.nodes.syncing).length > 0) {
+      return Object.values(this.nodes.syncing)[0]
+    } else if (Object.keys(this.nodes.joining).length > 0) {
+      return Object.values(this.nodes.joining)[0]
+    }
+  }
+
   resetRareCounters() {
     this.rareEventCounters = {};
     const responses = [];
