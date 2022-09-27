@@ -167,11 +167,10 @@ app.get("/favicon.ico", (req, res) => {
   return res.send()
 });
 
-
-// app.get("/history-log", (req, res) => {
-//   console.log("log server page");
-//   res.render("history-log.html", { title: "test" });
-// });
+app.get("/history-log", (req, res) => {
+  console.log("log server page");
+  res.render("history-log.html", { title: "test" });
+});
 
 app.get("/large-network", (req, res) => {
   res.render("large-network.html");
@@ -333,6 +332,7 @@ io.on("connection", (socket) => {
       if (!data) {
         data = "Found no previous log.";
       }
+        // console.log('data', data.split("\n"))
       io.emit("old-data", data);
     });
   }
@@ -383,7 +383,8 @@ const start = () => {
       throw err;
     }
     console.log(`server started on port ${CONFIG.port} (${CONFIG.env})`);
-    Logger.historyLogger.info(`Monitor server started.`);
+      console.log('history logger', Logger.historyLogger.info)
+    Logger.historyLogger.info(`started`);
   });
 };
 

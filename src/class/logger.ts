@@ -139,8 +139,10 @@ export let errorLogger: any;
 
 export function initLogger(baseDir: string, logsConfig: LogsConfiguration) {
   let logger = new Logger(baseDir, logsConfig);
+    console.log("logger", logger)
+
   mainLogger = logger.getLogger("main");
-  historyLogger = logger.getLogger("fatal");
+  historyLogger = logger.getLogger("history");
   errorLogger = logger.getLogger("errorFile");
 }
 

@@ -192,7 +192,7 @@ export class Node {
       this.checkCrashedBefore(this.history[nodeId].data);
       if(this.nodes.joining[publicKey]) delete this.nodes.joining[publicKey]
       Logger.historyLogger.info(
-        `NODE JOINED, NodeId: ${nodeId}, Ip: ${nodeIpInfo.externalIp}, Port: ${nodeIpInfo.externalPort}`
+          `joined ${nodeId} ${nodeIpInfo.externalIp} ${nodeIpInfo.externalPort} ${this.counter}`
       );
     } catch (e) {
       Logger.mainLogger.error(e)
@@ -206,7 +206,7 @@ export class Node {
       this.history[nodeId].active = Date.now();
       const nodeData = this.history[nodeId].data;
       Logger.historyLogger.info(
-        `NODE ACTIVE, NodeId: ${nodeId}, Ip: ${nodeData.nodeIpInfo.externalIp}, Port: ${nodeData.nodeIpInfo.externalPort}`
+          `active ${nodeId} ${nodeData.nodeIpInfo.externalIp} ${nodeData.nodeIpInfo.externalPort} ${this.counter}`
       );
     } catch (e) {
       Logger.mainLogger.error(e)
@@ -246,7 +246,7 @@ export class Node {
         });
         if (this.history[nodeId]) this.history[nodeId].removed = Date.now();
         Logger.historyLogger.info(
-          `NODE REMOVED, NodeId: ${nodeId}, Ip: ${removedNode.nodeIpInfo.externalIp}, Port: ${removedNode.nodeIpInfo.externalPort}`
+          `removed ${nodeId} ${removedNode.nodeIpInfo.externalIp} ${removedNode.nodeIpInfo.externalPort} ${this.counter}`
         );
       }
       delete this.nodes.active[nodeId];
@@ -403,7 +403,7 @@ export class Node {
           const data = this.nodes.active[nodeId];
           this.crashedNodes[nodeId] = data;
           Logger.historyLogger.info(
-            `NODE DEAD, NodeId: ${nodeId}, Ip: ${data.nodeIpInfo.externalIp}, Port: ${data.nodeIpInfo.externalPort}`
+            `dead ${nodeId} ${data.nodeIpInfo.externalIp} ${data.nodeIpInfo.externalPort} ${this.counter}`
           );
         }
       } else {
