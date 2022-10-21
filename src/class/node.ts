@@ -13,10 +13,10 @@ import {
 } from '../interface/interface';
 
 type TxCoverageData = {
-  txId: string,
-  count: number,
-  timestamp: number
-}
+  txId: string;
+  count: number;
+  timestamp: number;
+};
 
 export class Node {
   totalTxInjected: number;
@@ -33,12 +33,12 @@ export class Node {
   lostNodeIds: Map<string, boolean>;
   syncStatements: {};
   removedNodes: {};
-  crashedNodes: { [key: string]: CrashNodes };
+  crashedNodes: {[key: string]: CrashNodes};
   history: {};
   counter: number;
   rareEventCounters = {};
-  txCoverageMap: { [key: string]: TxCoverageData }
-  txCoverageCounter: { [key: string]: number }
+  txCoverageMap: {[key: string]: TxCoverageData};
+  txCoverageCounter: {[key: string]: number};
 
   constructor() {
     this.totalTxInjected = 0;
@@ -59,9 +59,9 @@ export class Node {
     this.history = {};
     this.counter = 0;
     this.rareEventCounters = {};
-    this.txCoverageMap = {}
-    this.txCoverageCounter = {}
-    setInterval(this.summarizeTxCoverage.bind(this), 10000)
+    this.txCoverageMap = {};
+    this.txCoverageCounter = {};
+    setInterval(this.summarizeTxCoverage.bind(this), 10000);
   }
 
   private _createEmptyNodelist(): NodeList {
@@ -81,7 +81,7 @@ export class Node {
         'Joining node is found in the syncing list. Removing existing syncing node.'
       );
     }
-    const existingActiveNode = this.getExistingActiveNode('', nodeIpInfo)
+    const existingActiveNode = this.getExistingActiveNode('', nodeIpInfo);
     if (existingActiveNode) {
       delete this.nodes.active[existingActiveNode.nodeId];
       Logger.mainLogger.info(
@@ -91,7 +91,11 @@ export class Node {
   }
 
   getExistingActiveNode(nodeId: string, nodeIpInfo: NodeIpInfo): ActiveReport {
-    Logger.mainLogger.debug('Checking existing active node.', nodeId, nodeIpInfo);
+    Logger.mainLogger.debug(
+      'Checking existing active node.',
+      nodeId,
+      nodeIpInfo
+    );
     try {
       if (this.nodes.active[nodeId]) {
         Logger.mainLogger.debug(
@@ -150,7 +154,10 @@ export class Node {
 
   joined(publicKey: string, nodeId: string, nodeIpInfo: NodeIpInfo): void {
     try {
-      const existingSyncingNode = this.getExistingSyncingNode(nodeId, nodeIpInfo);
+      const existingSyncingNode = this.getExistingSyncingNode(
+        nodeId,
+        nodeIpInfo
+      );
       const existingActiveNode = this.getExistingActiveNode(nodeId, nodeIpInfo);
       if (existingSyncingNode) {
         delete this.nodes.syncing[existingSyncingNode.nodeId];
@@ -190,12 +197,12 @@ export class Node {
         nodeId,
       };
       this.checkCrashedBefore(this.history[nodeId].data);
-      if(this.nodes.joining[publicKey]) delete this.nodes.joining[publicKey]
+      if (this.nodes.joining[publicKey]) delete this.nodes.joining[publicKey];
       Logger.historyLogger.info(
-          `joined ${nodeId} ${nodeIpInfo.externalIp} ${nodeIpInfo.externalPort} ${this.counter}`
+        `joined ${nodeId} ${nodeIpInfo.externalIp} ${nodeIpInfo.externalPort} ${this.counter}`
       );
     } catch (e) {
-      Logger.mainLogger.error(e)
+      Logger.mainLogger.error(e);
     }
   }
 
@@ -206,10 +213,10 @@ export class Node {
       this.history[nodeId].active = Date.now();
       const nodeData = this.history[nodeId].data;
       Logger.historyLogger.info(
-          `active ${nodeId} ${nodeData.nodeIpInfo.externalIp} ${nodeData.nodeIpInfo.externalPort} ${this.counter}`
+        `active ${nodeId} ${nodeData.nodeIpInfo.externalIp} ${nodeData.nodeIpInfo.externalPort} ${this.counter}`
       );
     } catch (e) {
-      Logger.mainLogger.error(e)
+      Logger.mainLogger.error(e);
     }
   }
 
@@ -253,11 +260,11 @@ export class Node {
       // clean old removed nodes to prevent memory leak
       for (let counter in this.removedNodes) {
         if (parseInt(counter) + 5 < this.counter) {
-          delete this.removedNodes[counter]
+          delete this.removedNodes[counter];
         }
       }
     } catch (e) {
-      Logger.mainLogger.error(e)
+      Logger.mainLogger.error(e);
     }
   }
 
@@ -268,38 +275,39 @@ export class Node {
   processTxCoverage(txCoverage) {
     for (const txId in txCoverage) {
       if (this.txCoverageMap[txId]) {
-        this.txCoverageMap[txId].count += 1
-        this.txCoverageMap[txId].timestamp = Date.now()
+        this.txCoverageMap[txId].count += 1;
+        this.txCoverageMap[txId].timestamp = Date.now();
       } else {
-
         this.txCoverageMap[txId] = {
           txId: String(txId),
           count: 1,
-          timestamp: Date.now()
-        } as TxCoverageData
+          timestamp: Date.now(),
+        } as TxCoverageData;
       }
     }
   }
 
   summarizeTxCoverage() {
-    let now = Date.now()
+    let now = Date.now();
     // process txs which are 1 cycle old
-    let readyTxs: TxCoverageData[] = Object.values(this.txCoverageMap).filter((data: TxCoverageData) => now - data.timestamp > 60000)
+    let readyTxs: TxCoverageData[] = Object.values(this.txCoverageMap).filter(
+      (data: TxCoverageData) => now - data.timestamp > 60000
+    );
 
     for (let tx of readyTxs) {
       if (this.txCoverageCounter[tx.count]) {
-        this.txCoverageCounter[String(tx.count)] += 1
+        this.txCoverageCounter[String(tx.count)] += 1;
       } else {
-        this.txCoverageCounter[String(tx.count)] = 1
+        this.txCoverageCounter[String(tx.count)] = 1;
       }
-      delete this.txCoverageMap[tx.txId]
+      delete this.txCoverageMap[tx.txId];
     }
   }
 
   getTxCoverage() {
     return {
-      txCoverageCounter: this.txCoverageCounter
-    }
+      txCoverageCounter: this.txCoverageCounter,
+    };
   }
 
   heartbeat(nodeId: string, data): void {
@@ -314,7 +322,7 @@ export class Node {
     }
     this.nodes.active[nodeId] = data;
     // this.processTxCoverage(data.txCoverage)
-    delete this.nodes.active[nodeId].txCoverage
+    delete this.nodes.active[nodeId].txCoverage;
     this.nodes.active[nodeId].nodeId = nodeId;
     this.nodes.active[nodeId].timestamp = Date.now();
     this.nodes.active[nodeId].crashed = false;
@@ -376,7 +384,7 @@ export class Node {
     if (Object.keys(this.nodes.active).length === 0) return;
     const newAvgTps = Math.round(
       (this.totalProcessed - this.lastTotalProcessed) /
-      (this.reportInterval / 1000)
+        (this.reportInterval / 1000)
     );
     if (this.avgTps > 0) diffRatio = (newAvgTps - this.avgTps) / this.avgTps;
     if (diffRatio < 1.5 || diffRatio > 0.5) {
@@ -420,24 +428,25 @@ export class Node {
   getRemoved() {
     const start = this.counter >= 3 ? this.counter - 3 : 0;
     const end = this.counter;
-    let recentRemovedNodes = []
+    let recentRemovedNodes = [];
     for (let i = start; i <= end; i++) {
-      let nodes = this.removedNodes[i]
-      if (nodes && nodes.length > 0) recentRemovedNodes = recentRemovedNodes.concat(nodes)
+      let nodes = this.removedNodes[i];
+      if (nodes && nodes.length > 0)
+        recentRemovedNodes = recentRemovedNodes.concat(nodes);
     }
     return recentRemovedNodes;
   }
 
   getRandomNode() {
     if (Object.keys(this.nodes.active).length > 0) {
-      let nodes = Object.values(this.nodes.active)
-      let activeNodes = nodes.filter(node => node.crashed === false)
-      let index = Math.floor(Math.random() * activeNodes.length)
-      return activeNodes[index]
+      let nodes = Object.values(this.nodes.active);
+      let activeNodes = nodes.filter(node => node.crashed === false);
+      let index = Math.floor(Math.random() * activeNodes.length);
+      return activeNodes[index];
     } else if (Object.keys(this.nodes.syncing).length > 0) {
-      return Object.values(this.nodes.syncing)[0]
+      return Object.values(this.nodes.syncing)[0];
     } else if (Object.keys(this.nodes.joining).length > 0) {
-      return Object.values(this.nodes.joining)[0]
+      return Object.values(this.nodes.joining)[0];
     }
   }
 
