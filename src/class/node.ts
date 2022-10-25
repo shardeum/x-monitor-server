@@ -25,9 +25,7 @@ export class Node {
   totalProcessed: number;
   avgTps: number;
   maxTps: number;
-  rejectedTps: number;
   lastTotalProcessed: number;
-  lastTotalTxRejected: number;
   reportInterval: number;
   nodes: NodeList;
   isTimerStarted: boolean;
@@ -49,7 +47,6 @@ export class Node {
     this.totalProcessed = 0;
     this.avgTps = 0;
     this.maxTps = 0;
-    this.rejectedTps = 0;
     this.lastTotalProcessed = 0;
     this.reportInterval = 1000;
     this.nodes = this._createEmptyNodelist();
@@ -65,8 +62,6 @@ export class Node {
     this.txCoverageMap = {};
     this.txCoverageCounter = {};
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
-
-    setInterval(this.updateRejectedTps.bind(this), this.reportInterval);
   }
 
   private _createEmptyNodelist(): NodeList {
@@ -316,6 +311,8 @@ export class Node {
   }
 
   heartbeat(nodeId: string, data): void {
+    // Logger.historyLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, Ip: ${data.nodeIpInfo.externalIp}, Port: ${data.nodeIpInfo.externalPort}`)
+    // Logger.mainLogger.info(`NODE HEARTBEAT, NodeId: ${nodeId}, ${JSON.stringify(data)}`)
     ProfilerModule.profilerInstance.profileSectionStart('heartbeat');
     if (this.nodes.syncing[nodeId]) {
       Logger.mainLogger.debug(
@@ -324,6 +321,7 @@ export class Node {
       delete this.nodes.syncing[nodeId];
     }
     this.nodes.active[nodeId] = data;
+    // this.processTxCoverage(data.txCoverage)
     delete this.nodes.active[nodeId].txCoverage;
     this.nodes.active[nodeId].nodeId = nodeId;
     this.nodes.active[nodeId].timestamp = Date.now();
@@ -374,6 +372,9 @@ export class Node {
 
     // decouple rareCounters from report to avoid large report size
     delete this.nodes.active[nodeId].rareCounters;
+
+    // this.avgApplied += (data.txInjected - data.txRejected - data.txExpired)
+    // writeStream.write(JSON.stringify(this.nodes.active[nodeId], null, 2) + '\n')
     ProfilerModule.profilerInstance.profileSectionEnd('heartbeat');
   }
 
@@ -398,23 +399,6 @@ export class Node {
       this.updateAvgAndMaxTps();
     }, this.reportInterval);
     ProfilerModule.profilerInstance.profileSectionEnd('updateAvgAndMaxTps');
-  }
-
-  updateRejectedTps() {
-    ProfilerModule.profilerInstance.profileSectionStart('updateRejectedTps');
-    if (Object.keys(this.nodes.active).length === 0) {
-      this.rejectedTps = 0;
-    }
-
-    const rejectedTps = Math.round(
-      (this.totalTxRejected - this.lastTotalTxRejected) /
-        (this.reportInterval / 1000)
-    );
-    this.rejectedTps = rejectedTps;
-
-    this.lastTotalTxRejected = this.totalTxRejected;
-
-    ProfilerModule.profilerInstance.profileSectionEnd('updateRejectedTps');
   }
 
   checkDeadOrAlive() {
@@ -555,7 +539,6 @@ export class Node {
         totalProcessed: this.totalProcessed,
         avgTps: this.avgTps,
         maxTps: this.maxTps,
-        rejectedTps: this.rejectedTps,
         timestamp: Date.now(),
       };
     } else {
@@ -568,7 +551,6 @@ export class Node {
         totalProcessed: this.totalProcessed,
         avgTps: this.avgTps,
         maxTps: this.maxTps,
-        rejectedTps: this.rejectedTps,
         timestamp: Date.now(),
       };
     }

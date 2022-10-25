@@ -1,5 +1,5 @@
-import {Request} from 'express';
-import {Node} from '../class/node';
+import { Request } from "express";
+import { Node } from "../class/node";
 
 declare global {
   var node: Node;
@@ -45,7 +45,6 @@ export interface Report {
   timestamp: number;
   avgTps: number;
   maxTps: number;
-  rejectedTps: number;
 }
 
 export interface NodeIpInfo {
@@ -84,7 +83,7 @@ export interface ActiveReport {
   txProcessed: number;
   reportInterval: number;
   nodeIpInfo: NodeIpInfo;
-  txCoverage: any;
+  txCoverage: any,
   partitionReport:
     | {}
     | {
