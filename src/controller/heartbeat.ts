@@ -11,7 +11,7 @@ const heartbeat = (req: RequestWithBody, res: Response, next: NextFunction) => {
     const isReportValid = validateReport(data);
     if (!isReportValid)
       Logger.errorLogger.error("Report is invalid", nodeId, data);
-    if (nodeId && isReportValid) {
+    if (nodeId && isReportValid && data.nodeIpInfo && data.currentLoad) {
       let Node: Node = global.node;
       Node.heartbeat(nodeId, data);
       let resp = {
@@ -22,10 +22,11 @@ const heartbeat = (req: RequestWithBody, res: Response, next: NextFunction) => {
       let resp = {
         received: false,
       };
-      res.status(200).send(resp);
+      res.status(400).send(resp);
     }
   } catch (e) {
     Logger.mainLogger.error(e)
+      res.status(500).send('');
   }
 };
 
