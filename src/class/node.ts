@@ -316,6 +316,7 @@ export class Node {
   }
 
   heartbeat(nodeId: string, data): void {
+    console.log('getting hearts');
     ProfilerModule.profilerInstance.profileSectionStart('heartbeat');
     if (this.nodes.syncing[nodeId]) {
       Logger.mainLogger.debug(
