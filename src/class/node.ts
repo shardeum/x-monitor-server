@@ -214,7 +214,7 @@ export class Node {
   active(nodeId: string): void {
     try {
       delete this.nodes.syncing[nodeId];
-      this.nodes.active[nodeId] = {} as ActiveReport;
+      // this.nodes.active[nodeId] = {} as ActiveReport;
       this.history[nodeId].active = Date.now();
       const nodeData = this.history[nodeId].data;
       Logger.historyLogger.info(
@@ -534,9 +534,11 @@ export class Node {
 
   report(lastTimestamp?: number): Report {
     ProfilerModule.profilerInstance.profileSectionStart('GET_report');
+
     if (lastTimestamp) {
       const updatedNodes = {};
       for (const nodeId in this.nodes.active) {
+        if (!this.nodes.active[nodeId].nodeIpInfo) continue
         if (this.nodes.active[nodeId].timestamp > lastTimestamp) {
           updatedNodes[nodeId] = this.nodes.active[nodeId];
         }
