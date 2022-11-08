@@ -153,6 +153,13 @@ global.User.create({
 })
 
 app.get("/", (req, res) => {
+  const numActiveNodes = node.getActiveList().length;
+  const maxNodeCount = 200;
+
+  if (numActiveNodes > maxNodeCount) {
+    return res.redirect('/large-network')
+  }
+
   res.render("index.html", {title: "test"});
 });
 app.get("/signin", (req, res) => {
