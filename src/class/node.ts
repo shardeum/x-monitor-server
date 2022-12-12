@@ -10,6 +10,8 @@ import {
   ActiveReport,
   SyncReport,
   CrashNodes,
+  CountedEvent,
+  MonitorCountedEventMap,
 } from '../interface/interface';
 
 type TxCoverageData = {
@@ -41,6 +43,7 @@ export class Node {
   rareEventCounters = {};
   txCoverageMap: {[key: string]: TxCoverageData};
   txCoverageCounter: {[key: string]: number};
+  countedEvents: MonitorCountedEventMap;
 
   constructor() {
     this.totalTxInjected = 0;
@@ -64,6 +67,7 @@ export class Node {
     this.rareEventCounters = {};
     this.txCoverageMap = {};
     this.txCoverageCounter = {};
+    this.countedEvents = new Map();
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
 
     setInterval(this.updateRejectedTps.bind(this), this.reportInterval);
@@ -315,7 +319,7 @@ export class Node {
     };
   }
 
-  heartbeat(nodeId: string, data): void {
+  heartbeat(nodeId: string, data: ActiveReport): void {
     console.log('getting hearts');
     ProfilerModule.profilerInstance.profileSectionStart('heartbeat');
     if (this.nodes.syncing[nodeId]) {
@@ -364,6 +368,10 @@ export class Node {
     this.totalTxRejected += data.txRejected;
     this.totalTxExpired += data.txExpired;
     this.totalProcessed += data.txProcessed;
+    
+    this.countedEvents = this.aggregateMonitorCountedEvents(
+      this.countedEvents, data.countedEvents, nodeId);
+
     if (this.counter < data.cycleCounter) this.counter = data.cycleCounter;
 
     if (!this.isTimerStarted) {
@@ -376,6 +384,49 @@ export class Node {
     // decouple rareCounters from report to avoid large report size
     delete this.nodes.active[nodeId].rareCounters;
     ProfilerModule.profilerInstance.profileSectionEnd('heartbeat');
+  }
+
+  /**
+   * Aggregates the incoming counted events and updates the MonitorCountedEventMap in place and returns it
+   * @param currentCountedEvents 
+   * @param countedEvents 
+   * @param nodeId 
+   * @returns 
+   */
+  private aggregateMonitorCountedEvents(currentCountedEvents: MonitorCountedEventMap , countedEvents: CountedEvent[], nodeId: string): MonitorCountedEventMap {
+    countedEvents.forEach(({eventCategory, eventName, eventCount, eventMessages}) => {
+      if (!currentCountedEvents.has(eventCategory)) {
+        currentCountedEvents.set(eventCategory, new Map());
+      }
+
+      const eventCategoryMap = currentCountedEvents.get(eventCategory)
+      if (!eventCategoryMap.has(eventName)) {
+        eventCategoryMap.set(eventName, {
+          eventCategory: eventCategory,
+          eventName: eventName,
+          eventCount: 0,
+          instanceData: {},
+          eventMessages: {}
+        });
+      }
+
+      const currentMonitorCountedEvent = currentCountedEvents.get(eventCategory).get(eventName);
+      currentMonitorCountedEvent.eventCount += eventCount;
+
+      if (currentMonitorCountedEvent.instanceData[nodeId] === undefined) {
+        currentMonitorCountedEvent.instanceData[nodeId] = {
+          eventCount: 0,
+        }
+      }
+      currentMonitorCountedEvent.instanceData[nodeId].eventCount += eventCount;
+      
+      eventMessages.forEach(eventMessage => {
+        const messageCount = currentMonitorCountedEvent.eventMessages[eventMessage] ?? 0;
+        currentMonitorCountedEvent.eventMessages[eventMessage] = messageCount + 1;
+      });
+    })
+
+    return currentCountedEvents;
   }
 
   updateAvgAndMaxTps() {
@@ -467,6 +518,10 @@ export class Node {
     }
   }
 
+  getCountedEvents() {
+    return this.countedEvents;
+  }
+
   resetRareCounters() {
     this.rareEventCounters = {};
     const responses = [];
@@ -538,7 +593,7 @@ export class Node {
     if (lastTimestamp) {
       const updatedNodes = {};
       for (const nodeId in this.nodes.active) {
-        if (!this.nodes.active[nodeId].nodeIpInfo) continue
+        if (!this.nodes.active[nodeId].nodeIpInfo) continue;
         if (this.nodes.active[nodeId].timestamp > lastTimestamp) {
           updatedNodes[nodeId] = this.nodes.active[nodeId];
         }

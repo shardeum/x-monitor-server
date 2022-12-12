@@ -106,7 +106,37 @@ export interface ActiveReport {
   isLost: boolean;
   isRefuted: boolean;
   shardusVersion: string;
+  countedEvents: CountedEvent[];
 }
+
+export type CountedEvent = {
+  eventCategory: string;
+  eventName: string;
+  eventCount: number;
+  eventTimestamps: number[];
+  eventMessages: string[];
+};
+
+// Map<eventCategory, Map<eventName, MonitorCountedEvent>>
+export type MonitorCountedEventMap = Map<string, Map<string, MonitorCountedEvent>>
+
+export type MonitorCountedEvent = {
+  eventCategory: string;
+  eventName: string;
+  eventCount: number;
+  instanceData: {
+    [nodeId: string]: MonitorEventCountedInstanceData | undefined;
+  };
+  eventMessages: {
+    [eventMessage: string]: number | undefined;
+  }
+}
+
+type MonitorEventCountedInstanceData = {
+  eventCount: number;
+}
+
+
 
 export interface PartitionInfo {
   i: number;

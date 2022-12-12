@@ -35,6 +35,7 @@ router.get('/rare-counter', Controller.rareCounter);
 router.get('/reset-rare-counter', Controller.resetRareCounter);
 router.get('/tx-coverage',  requireAuthInProduction, Controller.getTxCoverage);
 router.get('/mock',  requireAuthInProduction, Controller.mock);
+router.get('/counted-events', requireAuthInProduction, Controller.countedEvents);
 router.get('/status',  (req, res) => {
   res.status(200).send({ status: 'online', env: config.env });
 });
