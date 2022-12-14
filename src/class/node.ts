@@ -370,7 +370,7 @@ export class Node {
     this.totalProcessed += data.txProcessed;
     
     this.countedEvents = this.aggregateMonitorCountedEvents(
-      this.countedEvents, data.countedEvents, nodeId);
+      this.countedEvents, data.countedEvents, this.nodes.active[nodeId]);
 
     if (this.counter < data.cycleCounter) this.counter = data.cycleCounter;
 
@@ -393,7 +393,9 @@ export class Node {
    * @param nodeId 
    * @returns 
    */
-  private aggregateMonitorCountedEvents(currentCountedEvents: MonitorCountedEventMap , countedEvents: CountedEvent[], nodeId: string): MonitorCountedEventMap {
+  private aggregateMonitorCountedEvents(currentCountedEvents: MonitorCountedEventMap , countedEvents: CountedEvent[], node: ActiveReport): MonitorCountedEventMap {
+    const {nodeId, nodeIpInfo: {externalIp, externalPort}} = node;
+    
     countedEvents.forEach(({eventCategory, eventName, eventCount, eventMessages}) => {
       if (!currentCountedEvents.has(eventCategory)) {
         currentCountedEvents.set(eventCategory, new Map());
@@ -416,6 +418,8 @@ export class Node {
       if (currentMonitorCountedEvent.instanceData[nodeId] === undefined) {
         currentMonitorCountedEvent.instanceData[nodeId] = {
           eventCount: 0,
+          externalIp,
+          externalPort
         }
       }
       currentMonitorCountedEvent.instanceData[nodeId].eventCount += eventCount;

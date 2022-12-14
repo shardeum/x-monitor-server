@@ -133,6 +133,8 @@ export type MonitorCountedEvent = {
 }
 
 type MonitorEventCountedInstanceData = {
+  externalIp: string;
+  externalPort: number;
   eventCount: number;
 }
 

@@ -191,6 +191,10 @@ app.get("/chart", (req, res) => {
   res.render("chart.html");
 });
 
+app.get('/monitor-events', (_req, res) => {
+  res.render('monitor-events.html');
+});
+
 app.get("/summary", async (req, res) => {
   try {
     // Ping a node for the current cycle
