@@ -71,6 +71,8 @@ export class Node {
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
 
     setInterval(this.updateRejectedTps.bind(this), this.reportInterval);
+
+    setInterval(this.checkStandbyNodes.bind(this), 5000)
   }
 
   private _createEmptyNodelist(): NodeList {
@@ -81,6 +83,21 @@ export class Node {
     };
   }
 
+  checkStandbyNodes() {
+    for (let pk in this.nodes.joining) {
+      const nodeIpInfo: NodeIpInfo = this.nodes.joining[pk].nodeIpInfo;
+      const url = `http://${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort}/nodeinfo`;
+      axios.get(url).then(res => {
+        if (res.status !== 200) {
+          Logger.mainLogger.warn(`Standby node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is not online`)
+          delete this.nodes.joining[pk];
+        }
+      }).catch(err => {
+        Logger.mainLogger.warn(`Standby node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is not online`)
+        delete this.nodes.joining[pk];
+      })
+    }
+  }
   joining(publicKey: string, nodeIpInfo: NodeIpInfo): void {
     const existingStandbyNodePublicKey = this.getExistingStandbyNode(publicKey, nodeIpInfo);
     if (existingStandbyNodePublicKey) {
