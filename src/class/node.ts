@@ -82,7 +82,15 @@ export class Node {
   }
 
   joining(publicKey: string, nodeIpInfo: NodeIpInfo): void {
+    const existingStandbyNodePublicKey = this.getExistingStandbyNode(publicKey, nodeIpInfo);
+    if (existingStandbyNodePublicKey) {
+      delete this.nodes.joining[existingStandbyNodePublicKey];
+      Logger.mainLogger.info(
+          'Joining node is found in the standby list. Removing existing standby node'
+      );
+    }
     this.nodes.joining[publicKey] = {nodeIpInfo};
+
     const existingSyncingNode = this.getExistingSyncingNode('', nodeIpInfo);
     if (existingSyncingNode) {
       delete this.nodes.syncing[existingSyncingNode.nodeId];
@@ -158,6 +166,37 @@ export class Node {
       Logger.mainLogger.error('Error while chcking syncing node', e);
     }
     Logger.mainLogger.debug('No existing syncing node found.');
+    return;
+  }
+
+  getExistingStandbyNode(publicKey: string, nodeIpInfo: NodeIpInfo): string {
+    Logger.mainLogger.debug(
+        'Checking existing standby node.',
+        publicKey,
+        nodeIpInfo
+    );
+    try {
+      if (this.nodes.joining[publicKey]) {
+        Logger.mainLogger.debug(
+            'Found existing standby node with same publicKey',
+            publicKey
+        );
+        return publicKey;
+      } else {
+        for (const pk in this.nodes.joining) {
+          const standbyNode = this.nodes.joining[pk];
+          if (
+              standbyNode.nodeIpInfo.externalIp === nodeIpInfo.externalIp &&
+              standbyNode.nodeIpInfo.externalPort === nodeIpInfo.externalPort
+          ) {
+            return pk;
+          }
+        }
+      }
+    } catch (e) {
+      Logger.mainLogger.error('Error while checking standby node', e);
+    }
+    Logger.mainLogger.debug('No existing standby node found.');
     return;
   }
 
@@ -368,7 +407,7 @@ export class Node {
     this.totalTxRejected += data.txRejected;
     this.totalTxExpired += data.txExpired;
     this.totalProcessed += data.txProcessed;
-    
+
     this.countedEvents = this.aggregateMonitorCountedEvents(
       this.countedEvents, data.countedEvents, this.nodes.active[nodeId]);
 
@@ -388,14 +427,14 @@ export class Node {
 
   /**
    * Aggregates the incoming counted events and updates the MonitorCountedEventMap in place and returns it
-   * @param currentCountedEvents 
-   * @param countedEvents 
-   * @param nodeId 
-   * @returns 
+   * @param currentCountedEvents
+   * @param countedEvents
+   * @param nodeId
+   * @returns
    */
   private aggregateMonitorCountedEvents(currentCountedEvents: MonitorCountedEventMap , countedEvents: CountedEvent[], node: ActiveReport): MonitorCountedEventMap {
     const {nodeId, nodeIpInfo: {externalIp, externalPort}} = node;
-    
+
     countedEvents.forEach(({eventCategory, eventName, eventCount, eventMessages}) => {
       if (!currentCountedEvents.has(eventCategory)) {
         currentCountedEvents.set(eventCategory, new Map());
@@ -423,7 +462,7 @@ export class Node {
         }
       }
       currentMonitorCountedEvent.instanceData[nodeId].eventCount += eventCount;
-      
+
       eventMessages.forEach(eventMessage => {
         const messageCount = currentMonitorCountedEvent.eventMessages[eventMessage] ?? 0;
         currentMonitorCountedEvent.eventMessages[eventMessage] = messageCount + 1;
