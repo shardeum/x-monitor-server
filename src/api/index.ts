@@ -13,8 +13,8 @@ const requireAuth = passport.authenticate('jwt', { session: false });
 const requireSignin = passport.authenticate('local', { session: false });
 
 const requireAuthInProduction = function(req, res, next) {
-  if (config.env === 'production') {
-    console.log('Production mode required auth')
+  if (config.env === 'release') {
+    console.log('Release mode required auth')
     requireAuth(req, res, next)
   } else {
     console.log('Dev mode. No auth')
@@ -36,11 +36,10 @@ router.get('/reset-rare-counter', Controller.resetRareCounter);
 router.get('/tx-coverage',  requireAuthInProduction, Controller.getTxCoverage);
 router.get('/mock',  requireAuthInProduction, Controller.mock);
 router.get('/counted-events', requireAuthInProduction, Controller.countedEvents);
+router.get('/invalid-ip', Controller.invalidIPs);
 router.get('/status',  (req, res) => {
   res.status(200).send({ status: 'online', env: config.env });
 });
-
-
 
 router.post(
   '/joining',

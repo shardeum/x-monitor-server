@@ -1,4 +1,5 @@
 import axios from 'axios';
+import config from '../config';
 
 const Logger = require('./logger');
 const ProfilerModule = require('./profiler/profiler');
@@ -13,6 +14,7 @@ import {
   CountedEvent,
   MonitorCountedEventMap,
 } from '../interface/interface';
+import { isBogonIP, isInvalidIP } from '../utils';
 
 type TxCoverageData = {
   txId: string;
@@ -44,6 +46,8 @@ export class Node {
   txCoverageMap: {[key: string]: TxCoverageData};
   txCoverageCounter: {[key: string]: number};
   countedEvents: MonitorCountedEventMap;
+  bogonIpCount: any
+  invalidIpCount: any
 
   constructor() {
     this.totalTxInjected = 0;
@@ -57,7 +61,7 @@ export class Node {
     this.reportInterval = 1000;
     this.nodes = this._createEmptyNodelist();
     this.isTimerStarted = false;
-    this.crashTimout = 60000;
+    this.crashTimout = config.nodeCrashTimeout;
     this.lostNodeIds = new Map();
     this.syncStatements = {};
     this.removedNodes = {};
@@ -68,6 +72,9 @@ export class Node {
     this.txCoverageMap = {};
     this.txCoverageCounter = {};
     this.countedEvents = new Map();
+    this.bogonIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
+    this.invalidIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
+
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
 
     setInterval(this.updateRejectedTps.bind(this), this.reportInterval);
@@ -99,6 +106,20 @@ export class Node {
     }
   }
   joining(publicKey: string, nodeIpInfo: NodeIpInfo): void {
+    if (config.allowBogon === false) {
+      if (isBogonIP(nodeIpInfo.externalIp)) {
+        this.bogonIpCount.joining++
+        Logger.mainLogger.info(`Received bogon ip at joining report. public key: ${publicKey}, nodeIpInfo: ${JSON.stringify(nodeIpInfo)}`);
+        return
+      }
+    } else {
+      //even if not checking bogon still reject other invalid IPs that would be unusable
+      if (isInvalidIP(nodeIpInfo.externalIp)) {
+        this.invalidIpCount.joining++
+        Logger.mainLogger.info(`Received invalid ip at joining report. public key: ${publicKey}, nodeIpInfo: ${JSON.stringify(nodeIpInfo)}`);
+        return
+      }
+    }
     const existingStandbyNodePublicKey = this.getExistingStandbyNode(publicKey, nodeIpInfo);
     if (existingStandbyNodePublicKey) {
       delete this.nodes.joining[existingStandbyNodePublicKey];
@@ -219,6 +240,20 @@ export class Node {
 
   joined(publicKey: string, nodeId: string, nodeIpInfo: NodeIpInfo): void {
     try {
+      if (config.allowBogon === false) {
+        if (isBogonIP(nodeIpInfo.externalIp)) {
+          this.bogonIpCount.joined++
+          Logger.mainLogger.info(`Received bogon ip at joined report. public key: ${publicKey}, nodeId: ${nodeId}, nodeIpInfo: ${JSON.stringify(nodeIpInfo)}`);
+          return
+        }
+      } else {
+        //even if not checking bogon still reject other invalid IPs that would be unusable
+        if (isInvalidIP(nodeIpInfo.externalIp)) {
+          this.invalidIpCount.joined++
+          Logger.mainLogger.info(`Received invalid ip at joined report. public key: ${publicKey}, nodeId: ${nodeId}, nodeIpInfo: ${JSON.stringify(nodeIpInfo)}`);
+          return
+        }
+      }
       const existingSyncingNode = this.getExistingSyncingNode(
         nodeId,
         nodeIpInfo
@@ -376,7 +411,26 @@ export class Node {
   }
 
   heartbeat(nodeId: string, data: ActiveReport): void {
-    console.log('getting hearts');
+    try {
+      if (config.allowBogon === false) {
+        if (isBogonIP(data.nodeIpInfo.externalIp)) {
+          this.bogonIpCount.heartbeat++
+          Logger.mainLogger.info(`Received bogon ip at heartbeat data. nodeId: ${nodeId}, nodeIpInfo: ${JSON.stringify(data.nodeIpInfo.externalIp)}`);
+          return
+        }
+      } else {
+        //even if not checking bogon still reject other invalid IPs that would be unusable
+        if (isInvalidIP(data.nodeIpInfo.externalIp)) {
+          this.invalidIpCount.heartbeat++
+          Logger.mainLogger.info(`Received invalid ip at heartbeat data. nodeId: ${nodeId}, nodeIpInfo: ${JSON.stringify(data.nodeIpInfo.externalIp)}`);
+          return
+        }
+      }
+    } catch(e) {
+      Logger.mainLogger.error(
+        `Unable to check bogon or invalid ip`
+      );
+    }
     ProfilerModule.profilerInstance.profileSectionStart('heartbeat');
     if (this.nodes.syncing[nodeId]) {
       Logger.mainLogger.debug(
@@ -533,14 +587,20 @@ export class Node {
     ProfilerModule.profilerInstance.profileSectionStart('checkDeadOrAlive');
     for (const nodeId in this.nodes.active) {
       if (this.nodes.active[nodeId].timestamp < Date.now() - this.crashTimout) {
+        const data = this.nodes.active[nodeId];
         this.nodes.active[nodeId].crashed = true;
         this.history[nodeId].crashed = this.nodes.active[nodeId].timestamp;
         if (!this.crashedNodes[nodeId]) {
-          const data = this.nodes.active[nodeId];
           this.crashedNodes[nodeId] = data;
           Logger.historyLogger.info(
             `dead ${nodeId} ${data.nodeIpInfo.externalIp} ${data.nodeIpInfo.externalPort} ${this.counter}`
           );
+        }
+        if (config.removeCrashedNode) {
+          Logger.historyLogger.info(
+            `dead ${nodeId} ${data.nodeIpInfo.externalIp} ${data.nodeIpInfo.externalPort} ${this.counter} is removed from monitor`
+          );
+          delete this.nodes.active[nodeId]
         }
       } else {
         this.nodes.active[nodeId].crashed = false;
@@ -580,6 +640,10 @@ export class Node {
 
   getCountedEvents() {
     return this.countedEvents;
+  }
+
+  getInvalidIps() {
+    return {bogon: this.bogonIpCount, invalid: this.invalidIpCount}
   }
 
   resetRareCounters() {

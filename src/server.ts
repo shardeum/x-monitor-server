@@ -134,8 +134,8 @@ let accessLogStream = rfs("access.log", {
 });
 
 //Morgan
-app.use(morgan("common", {stream: accessLogStream}));
-app.use(morgan("dev"));
+// app.use(morgan("common", {stream: accessLogStream}));
+// app.use(morgan("dev"));
 
 // Parse body params and attach them to req.body
 app.use(bodyParser.json({limit: "50mb"}));
