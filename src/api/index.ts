@@ -40,6 +40,7 @@ router.get('/invalid-ip', Controller.invalidIPs);
 router.get('/status',  (req, res) => {
   res.status(200).send({ status: 'online', env: config.env });
 });
+router.get('/app-versions', requireAuthInProduction, Controller.appVersions);
 
 router.post(
   '/joining',

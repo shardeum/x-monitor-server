@@ -195,6 +195,10 @@ app.get('/monitor-events', (_req, res) => {
   res.render('monitor-events.html');
 });
 
+app.get('/app-versions', (_req, res) => {
+  res.render('app-versions.html');
+});
+
 app.get("/summary", async (req, res) => {
   try {
     // Ping a node for the current cycle

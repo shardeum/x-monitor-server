@@ -16,6 +16,7 @@ const getScaleReports = require('./getScaleReports');
 const mock = require('./mock');
 const countedEvents = require('./countedEvents');
 const invalidIPs = require('./invalidIPs');
+const appVersions = require('./appVersions');
 
 export const Controller = {
   joining,
@@ -35,5 +36,6 @@ export const Controller = {
   rareCounter,
   resetRareCounter,
   countedEvents,
-  invalidIPs
+  invalidIPs,
+  appVersions,
 };

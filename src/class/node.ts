@@ -48,6 +48,7 @@ export class Node {
   countedEvents: MonitorCountedEventMap;
   bogonIpCount: any
   invalidIpCount: any
+  appVersions: Map<string, string>; // Map nodeId to appVersion
 
   constructor() {
     this.totalTxInjected = 0;
@@ -74,6 +75,7 @@ export class Node {
     this.countedEvents = new Map();
     this.bogonIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
     this.invalidIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
+    this.appVersions = new Map<string, string>();
 
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
 
@@ -482,6 +484,8 @@ export class Node {
     this.countedEvents = this.aggregateMonitorCountedEvents(
       this.countedEvents, data.countedEvents, this.nodes.active[nodeId]);
 
+    this.appVersions[nodeId] = data.appVersion;
+
     if (this.counter < data.cycleCounter) this.counter = data.cycleCounter;
 
     if (!this.isTimerStarted) {
@@ -640,6 +644,21 @@ export class Node {
 
   getCountedEvents() {
     return this.countedEvents;
+  }
+
+  getAppVersions() {
+    // The total number of nodes for each version
+    const aggregatedAppVersion = new Map<string, number>()
+    for (const nodeId in this.nodes.active) {
+      const appVersion = this.nodes.active[nodeId].appVersion;
+      if (aggregatedAppVersion.has(appVersion)) {
+        aggregatedAppVersion.set(appVersion, aggregatedAppVersion.get(appVersion) + 1);
+      } else {
+        aggregatedAppVersion.set(appVersion, 1);
+      }
+    }
+
+    return aggregatedAppVersion;
   }
 
   getInvalidIps() {

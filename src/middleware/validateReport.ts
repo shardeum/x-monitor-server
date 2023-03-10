@@ -12,7 +12,6 @@ function validateReport(arg) {
     console.log(`No arg`);
     return false;
   }
-  // console.log(arg)
   if (!isExist(arg.repairsStarted) || typeof arg.repairsStarted !== "number") {
     console.log(`No repairsStarted`);
     return false;
