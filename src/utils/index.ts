@@ -189,3 +189,25 @@ function isReservedIP(ip) {
     (ip[0] === 255 && ip[1] === 255 && ip[2] === 255 && ip[3] === 255)
   )
 }
+
+export function mapToObjectRecursive(map: Map<string, any> | {[key: string]: any}): {[key: string]: any} {
+  const obj: {[key: string]: any} = {};
+  if (map instanceof Map) {
+    for (const [key, value] of map.entries()) {
+      if (value instanceof Map || typeof value === 'object') {
+        obj[key] = mapToObjectRecursive(value);
+      } else {
+        obj[key] = value;
+      }
+    }
+  } else {
+    for (const [key, value] of Object.entries(map)) {
+      if (value instanceof Map || typeof value === 'object') {
+        obj[key] = mapToObjectRecursive(value);
+      } else {
+        obj[key] = value;
+      }
+    }
+  }
+  return obj;
+}

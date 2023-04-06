@@ -13,8 +13,9 @@ import {
   CrashNodes,
   CountedEvent,
   MonitorCountedEventMap,
+  NodeInfoAppData,
 } from '../interface/interface';
-import { isBogonIP, isInvalidIP } from '../utils';
+import { isBogonIP, isInvalidIP, mapToObjectRecursive } from '../utils';
 
 type TxCoverageData = {
   txId: string;
@@ -49,6 +50,7 @@ export class Node {
   bogonIpCount: any
   invalidIpCount: any
   appVersions: Map<string, string>; // Map nodeId to appVersion
+  appData: Map<string, NodeInfoAppData>; // Map nodeId to appData
 
   constructor() {
     this.totalTxInjected = 0;
@@ -76,6 +78,7 @@ export class Node {
     this.bogonIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
     this.invalidIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
     this.appVersions = new Map<string, string>();
+    this.appData = new Map<string, NodeInfoAppData>();
 
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
 
@@ -485,6 +488,7 @@ export class Node {
       this.countedEvents, data.countedEvents, this.nodes.active[nodeId]);
 
     this.appVersions[nodeId] = data.appVersion;
+    this.appData.set(nodeId, data.appData);
 
     if (this.counter < data.cycleCounter) this.counter = data.cycleCounter;
 
@@ -647,18 +651,47 @@ export class Node {
   }
 
   getAppVersions() {
-    // The total number of nodes for each version
-    const aggregatedAppVersion = new Map<string, number>()
+    type AppVersions = {
+      nodeCount: number;
+      cliVersions: Map<string, number>;
+      guiVersions: Map<string, number>;
+    }
+
+    // Set the total number of nodes for each version
+    // For each version, also set a breakdown of CLI and GUI version counts
+    const aggregatedAppVersion = new Map<string, AppVersions>()
     for (const nodeId in this.nodes.active) {
-      const appVersion = this.nodes.active[nodeId].appVersion;
-      if (aggregatedAppVersion.has(appVersion)) {
-        aggregatedAppVersion.set(appVersion, aggregatedAppVersion.get(appVersion) + 1);
+      const appData = this.appData.get(nodeId);
+
+      if (aggregatedAppVersion.has(appData.shardeumVersion)) {
+        // Increment the CLI version count that this node is using
+        aggregatedAppVersion.get(appData.shardeumVersion)
+          .cliVersions.set(
+            appData.operatorCLIVersion,
+            aggregatedAppVersion.get(appData.shardeumVersion)
+              .cliVersions.get(appData.operatorCLIVersion) + 1
+          );
+
+        // Increment the GUI version count that this node is using
+        aggregatedAppVersion.get(appData.shardeumVersion)
+          .guiVersions.set(
+            appData.operatorGUIVersion,
+            aggregatedAppVersion.get(appData.shardeumVersion)
+              .guiVersions.get(appData.operatorGUIVersion) + 1
+          );            
+
+        // Increment the total node count for this version
+        aggregatedAppVersion.get(appData.shardeumVersion).nodeCount += 1;
       } else {
-        aggregatedAppVersion.set(appVersion, 1);
+        aggregatedAppVersion.set(appData.shardeumVersion, {
+          nodeCount: 1,
+          cliVersions: new Map<string, number>([[appData.operatorCLIVersion, 1]]),
+          guiVersions: new Map<string, number>([[appData.operatorGUIVersion, 1]])
+        });
       }
     }
 
-    return aggregatedAppVersion;
+    return mapToObjectRecursive(aggregatedAppVersion);
   }
 
   getInvalidIps() {

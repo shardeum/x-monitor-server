@@ -108,6 +108,7 @@ export interface ActiveReport {
   shardusVersion: string;
   countedEvents: CountedEvent[];
   appVersion: string;
+  appData: NodeInfoAppData;
 }
 
 export type CountedEvent = {
@@ -139,7 +140,14 @@ type MonitorEventCountedInstanceData = {
   eventCount: number;
 }
 
-
+export type NodeInfoAppData = {
+  shardeumVersion: string;
+  minVersion: string;
+  activeVersion: string;
+  latestVersion: string;
+  operatorCLIVersion: string;
+  operatorGUIVersion: string;
+};
 
 export interface PartitionInfo {
   i: number;

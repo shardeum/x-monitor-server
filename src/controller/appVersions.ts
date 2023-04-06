@@ -8,7 +8,7 @@ const appVersions = (req: RequestWithBody, res: Response) => {
     let Node: Node = global.node;
     let appVersions = Node.getAppVersions();
 
-    res.status(200).send(Object.fromEntries(appVersions));
+    res.status(200).send(appVersions);
   } catch (e) {
     mainLogger.error(e);
   }
