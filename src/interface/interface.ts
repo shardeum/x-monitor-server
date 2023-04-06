@@ -107,7 +107,6 @@ export interface ActiveReport {
   isRefuted: boolean;
   shardusVersion: string;
   countedEvents: CountedEvent[];
-  appVersion: string;
   appData: NodeInfoAppData;
 }
 

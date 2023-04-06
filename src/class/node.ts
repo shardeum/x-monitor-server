@@ -49,7 +49,6 @@ export class Node {
   countedEvents: MonitorCountedEventMap;
   bogonIpCount: any
   invalidIpCount: any
-  appVersions: Map<string, string>; // Map nodeId to appVersion
   appData: Map<string, NodeInfoAppData>; // Map nodeId to appData
 
   constructor() {
@@ -77,7 +76,6 @@ export class Node {
     this.countedEvents = new Map();
     this.bogonIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
     this.invalidIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
-    this.appVersions = new Map<string, string>();
     this.appData = new Map<string, NodeInfoAppData>();
 
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
@@ -487,7 +485,6 @@ export class Node {
     this.countedEvents = this.aggregateMonitorCountedEvents(
       this.countedEvents, data.countedEvents, this.nodes.active[nodeId]);
 
-    this.appVersions[nodeId] = data.appVersion;
     this.appData.set(nodeId, data.appData);
 
     if (this.counter < data.cycleCounter) this.counter = data.cycleCounter;
