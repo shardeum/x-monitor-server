@@ -82,18 +82,18 @@ export const computeMedian = (arr = [], sort = true) => {
 };
 
 export function isIPv6(ip: string) {
-  const slicedArr = ip.split(':')
-  if (slicedArr.length !== 8) return false
+  const slicedArr = ip.split(':');
+  if (slicedArr.length !== 8) return false;
 
   //TODO potentially replace regex with something faster (needs testing)
   for (const str of slicedArr) {
     // Check if string is a valid regex
-    const hexRegex = /^[0-9A-Fa-f]+$/
-    if (str.length < 0 || str.length > 4) return false
-    if (str.match(hexRegex) == null) return false
+    const hexRegex = /^[0-9A-Fa-f]+$/;
+    if (str.length < 0 || str.length > 4) return false;
+    if (str.match(hexRegex) == null) return false;
   }
 
-  return true
+  return true;
 }
 
 /**
@@ -103,14 +103,14 @@ export function isIPv6(ip: string) {
  * @returns
  */
 export function isBogonIP(ip) {
-  let ipArr
+  let ipArr;
   try {
-    ipArr = getIpArr(ip)
+    ipArr = getIpArr(ip);
   } catch (e) {
-    console.log(ip, e)
-    return true
+    console.log(ip, e);
+    return true;
   }
-  return isPrivateIP(ipArr) || isReservedIP(ipArr)
+  return isPrivateIP(ipArr) || isReservedIP(ipArr);
 }
 
 /**
@@ -120,34 +120,39 @@ export function isBogonIP(ip) {
  * @returns
  */
 export function isInvalidIP(ip) {
-  let ipArr
+  let ipArr;
   try {
-    ipArr = getIpArr(ip)
+    ipArr = getIpArr(ip);
   } catch (e) {
-    console.log(ip, e)
-    return true
+    console.log(ip, e);
+    return true;
   }
-  return isReservedIP(ipArr)
+  return isReservedIP(ipArr);
 }
 
 function getIpArr(ip: string) {
-  const slicedArr = ip.split('.')
+  const slicedArr = ip.split('.');
   if (slicedArr.length !== 4) {
-    throw new Error('Invalid IP address provided')
+    throw new Error('Invalid IP address provided');
   }
 
   for (const number of slicedArr) {
-    const num = Number(number)
+    const num = Number(number);
     if (num.toString() !== number) {
-      throw new Error('Leading zero detected. Invalid IP address')
+      throw new Error('Leading zero detected. Invalid IP address');
     }
     if (num < 0 || num > 255) {
-      throw new Error('Invalid IP address provided')
+      throw new Error('Invalid IP address provided');
     }
   }
   // Change to numbers Array
-  const numArray = [Number(slicedArr[0]), Number(slicedArr[1]), Number(slicedArr[2]), Number(slicedArr[3])]
-  return numArray
+  const numArray = [
+    Number(slicedArr[0]),
+    Number(slicedArr[1]),
+    Number(slicedArr[2]),
+    Number(slicedArr[3]),
+  ];
+  return numArray;
 }
 
 function isPrivateIP(ip) {
@@ -164,7 +169,7 @@ function isPrivateIP(ip) {
     (ip[0] === 172 && ip[1] >= 16 && ip[1] <= 31) ||
     // 192.168.0.0/16  Private-use networks
     (ip[0] === 192 && ip[1] === 168)
-  )
+  );
 }
 
 function isReservedIP(ip) {
@@ -187,10 +192,12 @@ function isReservedIP(ip) {
     ip[0] >= 240 ||
     // 255.255.255.255/32
     (ip[0] === 255 && ip[1] === 255 && ip[2] === 255 && ip[3] === 255)
-  )
+  );
 }
 
-export function mapToObjectRecursive(map: Map<string, any> | {[key: string]: any}): {[key: string]: any} {
+export function mapToObjectRecursive(
+  map: Map<string, any> | {[key: string]: any}
+): {[key: string]: any} {
   const obj: {[key: string]: any} = {};
   if (map instanceof Map) {
     for (const [key, value] of map.entries()) {
@@ -200,6 +207,8 @@ export function mapToObjectRecursive(map: Map<string, any> | {[key: string]: any
         obj[key] = value;
       }
     }
+  } else if (Array.isArray(map)) {
+    return map;
   } else {
     for (const [key, value] of Object.entries(map)) {
       if (value instanceof Map || typeof value === 'object') {
