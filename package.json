@@ -34,7 +34,7 @@
     "monitor-server": "build/src/server.js"
   },
   "dependencies": {
-    "@shardus/monitor-client": "^2.5.1",
+    "@shardus/monitor-client": "^2.5.2",
     "axios": "^0.24.0",
     "bcrypt-nodejs": "^0.0.3",
     "body-parser": "^1.18.3",
