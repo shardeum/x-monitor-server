@@ -40,6 +40,7 @@ const staticDirectory = path.resolve(clientDirectory + "/public");
 console.log("Client directory", clientDirectory)
 import logsConfig from './config/monitor-log';
 import {mainLogger} from "./class/logger";
+import { NodeList } from './interface/interface';
 
 const logDir = `monitor-logs`;
 const baseDir = ".";
@@ -84,9 +85,23 @@ if (process.env.PORT) {
   CONFIG.port = process.env.PORT;
 }
 
-// // Initialize node
+// // // Initialize node
 const node = new Node();
 global.node = node;
+
+try {
+  let jsonData = fs.readFileSync(CONFIG.backup.nodelist_path, 'utf8');
+  const restoreNodelist = JSON.parse(jsonData);
+  console.log("Found node list backup file restoring. . . ");
+  global.node.setNodeList(restoreNodelist);
+
+  jsonData = fs.readFileSync(CONFIG.backup.networkStat_path, 'utf8');
+  const restoreNetworkStats = JSON.parse(jsonData);
+  console.log("Found network stat backup file restoring. . . ");
+  global.node.setNetworkStat(restoreNetworkStats);
+} catch (err) {
+  console.error(err);
+}
 
 // Setup Log Directory
 Logger.initLogger(baseDir, logsConfig);
@@ -404,5 +419,29 @@ const start = () => {
 };
 
 start();
+
+process.on('SIGINT', async () => {
+  graceful_shutdown();
+})
+//gracefull shutdown suppport in windows. should mirror what SIGINT does in linux
+process.on('message', async (msg) => {
+  if (msg == 'shutdown') {
+    graceful_shutdown();
+  }
+})
+process.on('SIGTERM', async () => {
+  graceful_shutdown();
+})
+
+function graceful_shutdown(){
+  try{
+    global.node.createNodeListBackup(CONFIG.backup.nodelist_path);
+    global.node.createNetworkStatBackup(CONFIG.backup.networkStat_path);
+  }catch(e:any){
+    console.error(e);
+  }finally{
+    process.exit(0);
+  }
+}
 
 module.exports = app;

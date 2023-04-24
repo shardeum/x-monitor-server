@@ -1,5 +1,6 @@
 import axios from 'axios';
 import config from '../config';
+import fs from 'fs'
 
 const Logger = require('./logger');
 const ProfilerModule = require('./profiler/profiler');
@@ -52,31 +53,34 @@ export class Node {
   appData: Map<string, NodeInfoAppData>; // Map nodeId to appData
 
   constructor() {
-    this.totalTxInjected = 0;
-    this.totalTxRejected = 0;
-    this.totalTxExpired = 0;
-    this.totalProcessed = 0;
-    this.avgTps = 0;
-    this.maxTps = 0;
-    this.rejectedTps = 0;
-    this.lastTotalProcessed = 0;
-    this.reportInterval = 1000;
-    this.nodes = this._createEmptyNodelist();
-    this.isTimerStarted = false;
-    this.crashTimout = config.nodeCrashTimeout;
-    this.lostNodeIds = new Map();
-    this.syncStatements = {};
-    this.removedNodes = {};
-    this.crashedNodes = {};
-    this.history = {};
-    this.counter = 0;
-    this.rareEventCounters = {};
-    this.txCoverageMap = {};
-    this.txCoverageCounter = {};
-    this.countedEvents = new Map();
-    this.bogonIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
-    this.invalidIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
-    this.appData = new Map<string, NodeInfoAppData>();
+
+     this.totalTxInjected = 0;
+     this.totalTxRejected = 0;
+     this.totalTxExpired = 0;
+     this.totalProcessed = 0;
+     this.avgTps = 0;
+     this.maxTps = 0;
+     this.rejectedTps = 0;
+     this.lastTotalProcessed = 0;
+     this.reportInterval = 1000;
+     this.isTimerStarted = false;
+     this.crashTimout = config.nodeCrashTimeout;
+     this.lostNodeIds = new Map();
+     this.syncStatements = {};
+     this.removedNodes = {};
+     this.crashedNodes = {};
+     this.history = {};
+     this.counter = 0;
+     this.rareEventCounters = {};
+     this.txCoverageMap = {};
+     this.txCoverageCounter = {};
+     this.countedEvents = new Map();
+     this.bogonIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
+     this.invalidIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
+     this.appData = new Map<string, NodeInfoAppData>();
+
+
+    this.nodes = this._createEmptyNodelist()
 
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
 
@@ -84,6 +88,7 @@ export class Node {
 
     setInterval(this.checkStandbyNodes.bind(this), 5000)
   }
+
 
   private _createEmptyNodelist(): NodeList {
     return {
@@ -830,6 +835,92 @@ export class Node {
 
   getActiveList() {
     return Object.values(this.nodes.active);
+  }
+
+  createNodeListBackup(filePath: string){
+    if(!config.backup.enabled) return
+    if(fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    // console.log("BackingUp:",JSON.stringify(this.nodes));
+    try{
+      fs.writeFileSync(filePath, JSON.stringify(this.nodes), 'utf8');
+    }catch(err: any){
+      console.error("Couldn't backup node list due to error: ", err);
+    }
+  }
+
+  createNetworkStatBackup(filePath: string){
+    if(!config.backup.enabled) return
+    if(fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    const backup: any = {};
+
+    backup.totalTxInjected= this.totalTxInjected
+    backup.totalTxRejected= this.totalTxRejected
+    backup.totalTxExpired = this.totalTxExpired 
+    backup.totalProcessed = this.totalProcessed 
+    backup.avgTps = this.avgTps 
+    backup.maxTps = this.maxTps 
+    backup.rejectedTps = this.rejectedTps 
+    backup.lastTotalProcessed = this.lastTotalProcessed 
+    backup.reportInterval = this.reportInterval 
+    backup.isTimerStarted = this.isTimerStarted 
+    backup.crashTimout = this.crashTimout 
+    backup.lostNodeIds = Object.fromEntries(this.lostNodeIds)
+    backup.syncStatements = this.syncStatements 
+    backup.removedNodes = this.removedNodes 
+    backup.crashedNodes = this.crashedNodes 
+    backup.history = this.history 
+    backup.counter = this.counter 
+    backup.rareEventCounters = this.rareEventCounters
+    backup.txCoverageMap = this.txCoverageMap
+    backup.txCoverageCounter = this.txCoverageCounter
+    backup.countedEvents = Object.fromEntries(this.countedEvents)
+    backup.bogonIpCount = this.bogonIpCount  
+    backup.invalidIpCount = this.invalidIpCount 
+    backup.appVersions = Object.fromEntries( this.appVersions )
+    backup.appData = Object.fromEntries(this.appData)
+    // console.log("BackingUp:",JSON.stringify(this.nodes));
+    try{
+      fs.writeFileSync(filePath, JSON.stringify(backup), 'utf8');
+    }catch(err: any){
+      console.error("Couldn't backup node list due to error: ", err);
+    }
+  }
+
+  setNodeList(nodes: NodeList){
+    this.nodes = nodes
+  }
+
+  setNetworkStat(stats: any){
+      this.totalTxInjected = stats.totalTxInjected
+      this.totalTxRejected = stats.totalTxRejected
+      this.totalTxExpired = stats.totalTxExpired 
+      this.totalProcessed = stats.totalProcessed 
+      this.avgTps = stats.avgTps                
+      this.maxTps = stats.maxTps  
+      this.rejectedTps = stats.rejectedTps           
+      this.lastTotalProcessed = stats.lastTotalProcessed      
+      this.reportInterval = stats.reportInterval          
+      this.isTimerStarted = stats.isTimerStarted        
+      this.crashTimout = stats.crashTimout             
+      this.lostNodeIds = new Map(Object.entries(stats.lostNodeIds))
+      this.syncStatements = stats.syncStatements          
+      this.removedNodes = stats.removedNodes            
+      this.crashedNodes = stats.crashedNodes            
+      this.history = stats.history                   
+      this.counter = stats.counter               
+      this.rareEventCounters = stats.rareEventCounters         
+      this.txCoverageMap = stats.txCoverageMap           
+      this.txCoverageCounter = stats.txCoverageCounter         
+      this.countedEvents = new Map(Object.entries(stats.countedEvents))
+      this.bogonIpCount = stats.bogonIpCount        
+      this.invalidIpCount = stats.invalidIpCount       
+      this.appVersions = new Map(Object.entries(stats.appVersions))
+      this.appData = new Map(Object.entries(stats.appData))
   }
 
   flush() {
