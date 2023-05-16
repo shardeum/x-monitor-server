@@ -51,6 +51,7 @@ export class Node {
   bogonIpCount: any
   invalidIpCount: any
   appData: Map<string, NodeInfoAppData>; // Map nodeId to appData
+  networkId: string; // Network ID to detect bad heartbeats
 
   constructor() {
 
@@ -78,7 +79,7 @@ export class Node {
      this.bogonIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
      this.invalidIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
      this.appData = new Map<string, NodeInfoAppData>();
-
+     this.networkId = 'none';
 
     this.nodes = this._createEmptyNodelist()
 
@@ -439,6 +440,16 @@ export class Node {
         `Unable to check bogon or invalid ip`
       );
     }
+
+    // Check for valid heartbeat
+    if (this.networkId === 'none') { // First heartbeat
+      this.networkId = data.networkId;
+      Logger.mainLogger.info(`Setting networkId to ${this.networkId}.`);
+    } else if (this.networkId !== data.networkId) {
+      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with different networkId ${data.networkId}.`);
+      return;
+    } 
+
     ProfilerModule.profilerInstance.profileSectionStart('heartbeat');
     if (this.nodes.syncing[nodeId]) {
       Logger.mainLogger.debug(

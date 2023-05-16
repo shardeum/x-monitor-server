@@ -83,6 +83,7 @@ export interface ActiveReport {
   txExpired: number;
   txProcessed: number;
   reportInterval: number;
+  networkId: string;
   nodeIpInfo: NodeIpInfo;
   txCoverage: any;
   partitionReport:
