@@ -99,6 +99,20 @@ export class Node {
     };
   }
 
+  async getArchiverCycleRecord() {
+    const url = `http://${config.archiver.ip}:${config.archiver.port}/cycleinfo/1`;
+    const data = await axios.get(url).then(res => {
+      if (res.status !== 200) {
+        Logger.mainLogger.warn(`Archiver is not online`)
+        return
+      }
+      return res.data
+    }).catch(err => {
+      Logger.mainLogger.warn(`Archiver is not online`)
+      return
+    })
+    return data
+  }
   checkStandbyNodes() {
     for (let pk in this.nodes.joining) {
       const nodeIpInfo: NodeIpInfo = this.nodes.joining[pk].nodeIpInfo;
@@ -419,7 +433,7 @@ export class Node {
     };
   }
 
-  heartbeat(nodeId: string, data: ActiveReport): void {
+  async heartbeat(nodeId: string, data: ActiveReport): Promise<void> {
     try {
       if (config.allowBogon === false) {
         if (isBogonIP(data.nodeIpInfo.externalIp)) {
@@ -448,7 +462,18 @@ export class Node {
     } else if (this.networkId !== data.networkId) {
       Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with different networkId ${data.networkId}.`);
       return;
-    } 
+    }
+    const cycleRecord = await this.getArchiverCycleRecord();
+    Logger.mainLogger.info('PRINTING CYCLE RECORD');
+    Logger.mainLogger.info(cycleRecord);
+    if (!(data.cycleCounter && Math.abs(data.cycleCounter - cycleRecord.cycleInfo[0].counter) < 2)) {
+      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with cycleCounter ${data.cycleCounter}.`);
+      return;
+    }
+    if (!(data.timestamp && Math.abs(data.timestamp - cycleRecord.cycleInfo[0].start) < 60)) {
+      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with timestamp ${data.timestamp}.`);
+      return;
+    }
 
     ProfilerModule.profilerInstance.profileSectionStart('heartbeat');
     if (this.nodes.syncing[nodeId]) {
