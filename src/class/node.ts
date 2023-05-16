@@ -879,9 +879,8 @@ export class Node {
     backup.txCoverageMap = this.txCoverageMap
     backup.txCoverageCounter = this.txCoverageCounter
     backup.countedEvents = Object.fromEntries(this.countedEvents)
-    backup.bogonIpCount = this.bogonIpCount
+    backup.bogonIpCount = this.bogonIpCount  
     backup.invalidIpCount = this.invalidIpCount
-    // backup.appVersions = Object.fromEntries( this.appVersions )
     backup.appData = Object.fromEntries(this.appData)
     // console.log("BackingUp:",JSON.stringify(this.nodes));
     try{
@@ -917,9 +916,8 @@ export class Node {
       this.txCoverageMap = stats.txCoverageMap
       this.txCoverageCounter = stats.txCoverageCounter
       this.countedEvents = new Map(Object.entries(stats.countedEvents))
-      this.bogonIpCount = stats.bogonIpCount
+      this.bogonIpCount = stats.bogonIpCount        
       this.invalidIpCount = stats.invalidIpCount
-      // this.appVersions = new Map(Object.entries(stats.appVersions))
       this.appData = new Map(Object.entries(stats.appData))
   }
 
