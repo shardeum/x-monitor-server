@@ -85,6 +85,9 @@ if (process.env.PORT) {
   CONFIG.port = process.env.PORT;
 }
 
+// Setup Log Directory
+Logger.initLogger(baseDir, logsConfig);
+
 // // // Initialize node
 const node = new Node();
 global.node = node;
@@ -102,9 +105,6 @@ try {
 } catch (err) {
   console.error(err);
 }
-
-// Setup Log Directory
-Logger.initLogger(baseDir, logsConfig);
 
 let nestedCounter = new NestedCounters(app);
 let profiler = new Profiler(app);

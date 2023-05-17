@@ -52,6 +52,9 @@ export class Node {
   invalidIpCount: any
   appData: Map<string, NodeInfoAppData>; // Map nodeId to appData
   networkId: string; // Network ID to detect bad heartbeats
+  cycleRecordStart: number;
+  cycleRecordCounter: number;
+  cycleDuration: number;
 
   constructor() {
 
@@ -83,6 +86,37 @@ export class Node {
 
     this.nodes = this._createEmptyNodelist()
 
+    this.cycleRecordCounter = -1
+    const queryArchiverRetries = () => new Promise((resolve, reject) => {
+      let retiresLeft = 15
+      const retryTimer = setInterval(() => {
+        this.getArchiverCycleRecord()
+          .then(cycleRecord => {
+            clearInterval(retryTimer)
+            resolve(cycleRecord)
+          })
+          .catch(err => {
+            Logger.mainLogger.warn(`Could not get archiver cycle record`)
+            Logger.mainLogger.warn(err)
+            if(--retiresLeft === 0) {
+              clearInterval(retryTimer)
+              reject()
+            }
+            Logger.mainLogger.warn(`Retries left: ${retiresLeft}. Retrying in 10 seconds...`)
+          })
+      }, 10000)
+    })
+
+    queryArchiverRetries().then(cycleRecord => {
+      this.createArchiverCycleRecord(cycleRecord)
+      Logger.mainLogger.info(
+        `Archiver cycle record obtained. Ready to receive and validate heartbeats.`
+      )
+    }).catch(err => {
+      Logger.mainLogger.error(`FAILED TO GET ARCHIVER CYCLE RECORD. Will not be able to validate heartbeats.`)
+      Logger.mainLogger.error(err)
+    })
+
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
 
     setInterval(this.updateRejectedTps.bind(this), this.reportInterval);
@@ -101,17 +135,34 @@ export class Node {
 
   async getArchiverCycleRecord() {
     const url = `http://${config.archiver.ip}:${config.archiver.port}/cycleinfo/1`;
+    Logger.mainLogger.info(`Getting archiver cycle record from ${url}`)
     const data = await axios.get(url).then(res => {
-      if (res.status !== 200) {
-        Logger.mainLogger.warn(`Archiver is not online`)
-        return
+      if (res.status !== 200 || res.data.cycleInfo.length === 0) { 
+        throw new Error(`Unable to query cycleInfo from archiver. Received response: ${JSON.stringify(res.data)}`)
       }
       return res.data
-    }).catch(err => {
-      Logger.mainLogger.warn(`Archiver is not online`)
-      return
     })
     return data
+  }
+  createArchiverCycleRecord(cycleRecord) {
+    Logger.mainLogger.info(`Creating archiver cycle record with data: ${JSON.stringify(cycleRecord)}`)
+    this.cycleRecordStart = cycleRecord.cycleInfo[0].start
+    this.cycleRecordCounter = cycleRecord.cycleInfo[0].counter
+    this.cycleDuration = cycleRecord.cycleInfo[0].duration
+    this.networkId = cycleRecord.cycleInfo[0].networkId
+    Logger.mainLogger.info(
+      `Archiver cycle record created with start: 
+      ${this.cycleRecordStart}, counter: ${this.cycleRecordCounter}, 
+      duration: ${this.cycleDuration}, networkId: ${this.networkId}`
+    )
+  }
+  calculateCycleRecordCounter() {
+    const now = Date.now() / 1000;
+    const diffSeconds = now - this.cycleRecordStart;
+    const diffCycles = Math.floor(diffSeconds / this.cycleDuration);
+    const cycleRecordCounter = this.cycleRecordCounter + diffCycles;
+    const cycleRecordTimestamp = this.cycleRecordStart + (diffCycles * this.cycleDuration);
+    return {cycleRecordCounter, cycleRecordTimestamp}
   }
   checkStandbyNodes() {
     for (let pk in this.nodes.joining) {
@@ -434,6 +485,10 @@ export class Node {
   }
 
   async heartbeat(nodeId: string, data: ActiveReport): Promise<void> {
+    if (this.networkId === 'none') { // Not yet received cycleRecord from Archiver. Not ready for heartbeat.
+      return
+    }
+
     try {
       if (config.allowBogon === false) {
         if (isBogonIP(data.nodeIpInfo.externalIp)) {
@@ -456,22 +511,17 @@ export class Node {
     }
 
     // Check for valid heartbeat
-    if (this.networkId === 'none') { // First heartbeat
-      this.networkId = data.networkId;
-      Logger.mainLogger.info(`Setting networkId to ${this.networkId}.`);
-    } else if (this.networkId !== data.networkId) {
+    if (this.networkId !== data.networkId) {
       Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with different networkId ${data.networkId}.`);
       return;
     }
-    const cycleRecord = await this.getArchiverCycleRecord();
-    Logger.mainLogger.info('PRINTING CYCLE RECORD');
-    Logger.mainLogger.info(cycleRecord);
-    if (!(data.cycleCounter && Math.abs(data.cycleCounter - cycleRecord.cycleInfo[0].counter) < 2)) {
-      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with cycleCounter ${data.cycleCounter}.`);
+    const {cycleRecordCounter, cycleRecordTimestamp} = this.calculateCycleRecordCounter();
+    if (!(data.cycleCounter && Math.abs(data.cycleCounter - cycleRecordCounter) < 2)) {
+      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with cycleCounter ${data.cycleCounter}. Expected ${cycleRecordCounter}.`);
       return;
     }
-    if (!(data.timestamp && Math.abs(data.timestamp - cycleRecord.cycleInfo[0].start) < 60)) {
-      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with timestamp ${data.timestamp}.`);
+    if (!(data.timestamp && Math.abs(data.timestamp - cycleRecordTimestamp) < 60)) {
+      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with timestamp ${data.timestamp}. Expected ${cycleRecordTimestamp}.`);
       return;
     }
 
