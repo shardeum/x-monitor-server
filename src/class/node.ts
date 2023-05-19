@@ -318,7 +318,7 @@ export class Node {
     try {
       delete this.nodes.syncing[nodeId];
       // this.nodes.active[nodeId] = {} as ActiveReport;
-      this.history[nodeId].active = Date.now();
+      if (this.history[nodeId]) this.history[nodeId].active = Date.now();
       const nodeData = this.history[nodeId].data;
       Logger.historyLogger.info(
         `active ${nodeId} ${nodeData.nodeIpInfo.externalIp} ${nodeData.nodeIpInfo.externalPort} ${this.counter}`
@@ -680,7 +680,7 @@ export class Node {
             appData.operatorGUIVersion,
             aggregatedAppVersion.get(appData.shardeumVersion)
               .guiVersions.get(appData.operatorGUIVersion) + 1
-          );            
+          );
 
         // Increment the total node count for this version
         aggregatedAppVersion.get(appData.shardeumVersion).nodeCount += 1;
@@ -860,28 +860,28 @@ export class Node {
 
     backup.totalTxInjected= this.totalTxInjected
     backup.totalTxRejected= this.totalTxRejected
-    backup.totalTxExpired = this.totalTxExpired 
-    backup.totalProcessed = this.totalProcessed 
-    backup.avgTps = this.avgTps 
-    backup.maxTps = this.maxTps 
-    backup.rejectedTps = this.rejectedTps 
-    backup.lastTotalProcessed = this.lastTotalProcessed 
-    backup.reportInterval = this.reportInterval 
-    backup.isTimerStarted = this.isTimerStarted 
-    backup.crashTimout = this.crashTimout 
+    backup.totalTxExpired = this.totalTxExpired
+    backup.totalProcessed = this.totalProcessed
+    backup.avgTps = this.avgTps
+    backup.maxTps = this.maxTps
+    backup.rejectedTps = this.rejectedTps
+    backup.lastTotalProcessed = this.lastTotalProcessed
+    backup.reportInterval = this.reportInterval
+    backup.isTimerStarted = this.isTimerStarted
+    backup.crashTimout = this.crashTimout
     backup.lostNodeIds = Object.fromEntries(this.lostNodeIds)
-    backup.syncStatements = this.syncStatements 
-    backup.removedNodes = this.removedNodes 
-    backup.crashedNodes = this.crashedNodes 
-    backup.history = this.history 
-    backup.counter = this.counter 
+    backup.syncStatements = this.syncStatements
+    backup.removedNodes = this.removedNodes
+    backup.crashedNodes = this.crashedNodes
+    backup.history = this.history
+    backup.counter = this.counter
     backup.rareEventCounters = this.rareEventCounters
     backup.txCoverageMap = this.txCoverageMap
     backup.txCoverageCounter = this.txCoverageCounter
     backup.countedEvents = Object.fromEntries(this.countedEvents)
-    backup.bogonIpCount = this.bogonIpCount  
-    backup.invalidIpCount = this.invalidIpCount 
-    backup.appVersions = Object.fromEntries( this.appVersions )
+    backup.bogonIpCount = this.bogonIpCount
+    backup.invalidIpCount = this.invalidIpCount
+    // backup.appVersions = Object.fromEntries( this.appVersions )
     backup.appData = Object.fromEntries(this.appData)
     // console.log("BackingUp:",JSON.stringify(this.nodes));
     try{
@@ -898,28 +898,28 @@ export class Node {
   setNetworkStat(stats: any){
       this.totalTxInjected = stats.totalTxInjected
       this.totalTxRejected = stats.totalTxRejected
-      this.totalTxExpired = stats.totalTxExpired 
-      this.totalProcessed = stats.totalProcessed 
-      this.avgTps = stats.avgTps                
-      this.maxTps = stats.maxTps  
-      this.rejectedTps = stats.rejectedTps           
-      this.lastTotalProcessed = stats.lastTotalProcessed      
-      this.reportInterval = stats.reportInterval          
-      this.isTimerStarted = stats.isTimerStarted        
-      this.crashTimout = stats.crashTimout             
+      this.totalTxExpired = stats.totalTxExpired
+      this.totalProcessed = stats.totalProcessed
+      this.avgTps = stats.avgTps
+      this.maxTps = stats.maxTps
+      this.rejectedTps = stats.rejectedTps
+      this.lastTotalProcessed = stats.lastTotalProcessed
+      this.reportInterval = stats.reportInterval
+      this.isTimerStarted = stats.isTimerStarted
+      this.crashTimout = stats.crashTimout
       this.lostNodeIds = new Map(Object.entries(stats.lostNodeIds))
-      this.syncStatements = stats.syncStatements          
-      this.removedNodes = stats.removedNodes            
-      this.crashedNodes = stats.crashedNodes            
-      this.history = stats.history                   
-      this.counter = stats.counter               
-      this.rareEventCounters = stats.rareEventCounters         
-      this.txCoverageMap = stats.txCoverageMap           
-      this.txCoverageCounter = stats.txCoverageCounter         
+      this.syncStatements = stats.syncStatements
+      this.removedNodes = stats.removedNodes
+      this.crashedNodes = stats.crashedNodes
+      this.history = stats.history
+      this.counter = stats.counter
+      this.rareEventCounters = stats.rareEventCounters
+      this.txCoverageMap = stats.txCoverageMap
+      this.txCoverageCounter = stats.txCoverageCounter
       this.countedEvents = new Map(Object.entries(stats.countedEvents))
-      this.bogonIpCount = stats.bogonIpCount        
-      this.invalidIpCount = stats.invalidIpCount       
-      this.appVersions = new Map(Object.entries(stats.appVersions))
+      this.bogonIpCount = stats.bogonIpCount
+      this.invalidIpCount = stats.invalidIpCount
+      // this.appVersions = new Map(Object.entries(stats.appVersions))
       this.appData = new Map(Object.entries(stats.appData))
   }
 
