@@ -87,35 +87,9 @@ export class Node {
     this.nodes = this._createEmptyNodelist()
 
     this.cycleRecordCounter = -1
-    const queryArchiverRetries = () => new Promise((resolve, reject) => {
-      let retiresLeft = 15
-      const retryTimer = setInterval(() => {
-        this.getArchiverCycleRecord()
-          .then(cycleRecord => {
-            clearInterval(retryTimer)
-            resolve(cycleRecord)
-          })
-          .catch(err => {
-            Logger.mainLogger.warn(`Could not get archiver cycle record`)
-            Logger.mainLogger.warn(err)
-            if(--retiresLeft === 0) {
-              clearInterval(retryTimer)
-              reject()
-            }
-            Logger.mainLogger.warn(`Retries left: ${retiresLeft}. Retrying in 10 seconds...`)
-          })
-      }, 10000)
-    })
+    this.queryArchiverRetries()
 
-    queryArchiverRetries().then(cycleRecord => {
-      this.createArchiverCycleRecord(cycleRecord)
-      Logger.mainLogger.info(
-        `Archiver cycle record obtained. Ready to receive and validate heartbeats.`
-      )
-    }).catch(err => {
-      Logger.mainLogger.error(`FAILED TO GET ARCHIVER CYCLE RECORD. Will not be able to validate heartbeats.`)
-      Logger.mainLogger.error(err)
-    })
+    setInterval(this.queryArchiverRetries.bind(this), 20 * 60 * 1000) // Update cycleRecord every 20 minutes
 
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
 
@@ -133,6 +107,42 @@ export class Node {
     };
   }
 
+  queryArchiverRetries() {
+    // Keep trying to get cycleInfo from the archiver for 150 seconds
+    // Upon receiving cycleInfo, apply it and resolve
+    // If no cycleInfo is received after 150 seconds, reject
+    return new Promise((resolve, reject) => {
+      let retiresLeft = 15
+      const retryTimer = setInterval(() => {
+        this.getArchiverCycleRecord()
+          .then(cycleRecord => {
+            clearInterval(retryTimer)
+            resolve(cycleRecord)
+          })
+          .catch(err => {
+            Logger.mainLogger.warn(`Could not get archiver cycle record`)
+            Logger.mainLogger.warn(err)
+            if(--retiresLeft === 0) {
+              clearInterval(retryTimer)
+              reject()
+            }
+            Logger.mainLogger.warn(`Retries left: ${retiresLeft}. Retrying in 10 seconds...`)
+          })
+      }, 10000)
+    }).then(cycleRecord => {
+      this.applyArchiverCycleData(cycleRecord)
+      Logger.mainLogger.info(
+        `Archiver cycle record obtained. Ready to receive and validate heartbeats.`
+      )
+    }).catch(err => {
+      Logger.mainLogger.error(
+        'FAILED TO GET ARCHIVER CYCLE RECORD. '
+        + (this.cycleRecordCounter < 0) ? 'Will be unable to validate heartbeats.' : 'Using old values'
+      )
+      Logger.mainLogger.error(err)
+    })
+  }
+
   async getArchiverCycleRecord() {
     const url = `http://${config.archiver.ip}:${config.archiver.port}/cycleinfo/1`;
     Logger.mainLogger.info(`Getting archiver cycle record from ${url}`)
@@ -144,7 +154,7 @@ export class Node {
     })
     return data
   }
-  createArchiverCycleRecord(cycleRecord) {
+  applyArchiverCycleData(cycleRecord) {
     Logger.mainLogger.info(`Creating archiver cycle record with data: ${JSON.stringify(cycleRecord)}`)
     this.cycleRecordStart = cycleRecord.cycleInfo[0].start
     this.cycleRecordCounter = cycleRecord.cycleInfo[0].counter
