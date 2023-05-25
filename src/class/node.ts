@@ -16,7 +16,7 @@ import {
   MonitorCountedEventMap,
   NodeInfoAppData,
 } from '../interface/interface';
-import { isBogonIP, isInvalidIP, mapToObjectRecursive } from '../utils';
+import { isBogonIP, isInvalidIP, mapToObjectRecursive, CountTracker } from '../utils';
 
 type TxCoverageData = {
   txId: string;
@@ -55,6 +55,7 @@ export class Node {
   cycleRecordStart: number;
   cycleRecordCounter: number;
   cycleDuration: number;
+  cycleMarkerCount: CountTracker<string>;
 
   constructor() {
 
@@ -86,6 +87,7 @@ export class Node {
 
     this.nodes = this._createEmptyNodelist()
 
+    this.cycleMarkerCount = new CountTracker<string>();
     this.cycleRecordCounter = -1
     this.queryArchiverRetries()
 
@@ -533,6 +535,16 @@ export class Node {
     if (!(data.timestamp && Math.abs(data.timestamp - cycleRecordTimestamp) < 60)) {
       Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with timestamp ${data.timestamp}. Expected ${cycleRecordTimestamp}.`);
       return;
+    }
+    this.cycleMarkerCount.increment(data.cycleMarker)
+    if (this.cycleMarkerCount.getMaxCount() > 30) {
+      // If more than 30 nodes have reported the same cycleMarker, then it's the correct cycleMarker
+      if (this.cycleMarkerCount.getMaxEntry() !== data.cycleMarker) {
+        // Received heartbeat with wrong cycleMarker
+        Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with cycleMarker ${data.cycleMarker}. Expected ${this.cycleMarkerCount.getMaxEntry()}.`);
+        this.removed(nodeId);
+        return;
+      }
     }
 
     ProfilerModule.profilerInstance.profileSectionStart('heartbeat');

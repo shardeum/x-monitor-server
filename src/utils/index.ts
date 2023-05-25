@@ -220,3 +220,35 @@ export function mapToObjectRecursive(
   }
   return obj;
 }
+
+export class CountTracker<T> {
+  private counts: Map<T, number>;
+  private maxCount: number;
+  private maxEntry: T | null;
+
+  constructor() {
+    this.counts = new Map<T, number>();
+    this.maxCount = 0;
+    this.maxEntry = null;
+  }
+
+  increment(entry: T): void {
+    let count = this.counts.get(entry) || 0;
+    count++;
+
+    if (count > this.maxCount) {
+      this.maxCount = count;
+      this.maxEntry = entry;
+    }
+
+    this.counts.set(entry, count);
+  }
+
+  getMaxEntry(): T | null {
+    return this.maxEntry;
+  }
+
+  getMaxCount(): number {
+    return this.maxCount;
+  }
+}
