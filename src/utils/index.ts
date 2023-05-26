@@ -221,34 +221,60 @@ export function mapToObjectRecursive(
   return obj;
 }
 
-export class CountTracker<T> {
-  private counts: Map<T, number>;
-  private maxCount: number;
-  private maxEntry: T | null;
+// A class used for tracking cycleMarkers being reported by nodes
+export class MarkerCount {
+  private nodeMap: Map<string, string>;
+  private markerCount: Map<string, number>;
+  private heap: [string, number][];
+  private correctMarker: string;
 
   constructor() {
-    this.counts = new Map<T, number>();
-    this.maxCount = 0;
-    this.maxEntry = null;
+    this.nodeMap = new Map();
+    this.markerCount = new Map();
+    this.heap = [];
+    this.correctMarker = null;
   }
 
-  increment(entry: T): void {
-    let count = this.counts.get(entry) || 0;
-    count++;
-
-    if (count > this.maxCount) {
-      this.maxCount = count;
-      this.maxEntry = entry;
+  note(nodeId: string, marker: string) {
+    if(!this.nodeMap.has(nodeId)) {
+      this.nodeMap.set(nodeId, marker);
+      this.increment(marker);
+    } else {
+      const oldMarker = this.nodeMap.get(nodeId);
+      if (oldMarker !== marker) {
+        this.updateNodeMarker(oldMarker, marker);
+        this.nodeMap.set(nodeId, marker);
+      }
     }
-
-    this.counts.set(entry, count);
   }
 
-  getMaxEntry(): T | null {
-    return this.maxEntry;
+  increment(marker: string) {
+    this.markerCount.set(marker, (this.markerCount.get(marker) || 0) + 1);
+    this.heapify();
   }
 
-  getMaxCount(): number {
-    return this.maxCount;
+  updateNodeMarker(oldMarker: string, newMarker: string) {
+    if (oldMarker === this.getCorrectMarker()) {
+      // The correct cycle marker has been updated
+      this.correctMarker = newMarker;
+    }
+    this.markerCount.set(oldMarker, this.markerCount.get(oldMarker) - 1);
+    if (this.markerCount.get(oldMarker) === 0) {
+      this.markerCount.delete(oldMarker);
+    }
+    this.increment(newMarker);
+  }
+
+  getCorrectMarker() {
+    if (this.correctMarker === null) {
+      return this.heap[0][0];
+    } else {
+      return this.correctMarker;
+    }
+  }
+
+  heapify() {
+    this.heap = Array.from(this.markerCount.entries());
+    this.heap.sort((a, b) => b[1] - a[1]);
   }
 }
