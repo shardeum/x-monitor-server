@@ -769,6 +769,11 @@ export class Node {
     for (const nodeId in this.nodes.active) {
       const appData = this.appData.get(nodeId);
 
+      if(!appData) {
+        Logger.mainLogger.error(`Unable to find appData for node ${nodeId}`)
+        continue;
+      }
+
       if (aggregatedAppVersion.has(appData.shardeumVersion)) {
         // Increment the CLI version count that this node is using
         aggregatedAppVersion.get(appData.shardeumVersion)
