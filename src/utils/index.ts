@@ -226,13 +226,13 @@ export class MarkerCount {
   private nodeMap: Map<string, string>;
   private markerCount: Map<string, number>;
   private heap: [string, number][];
-  private correctMarker: string;
+  private possibleNewMarker: string;
 
   constructor() {
     this.nodeMap = new Map();
     this.markerCount = new Map();
     this.heap = [];
-    this.correctMarker = null;
+    this.possibleNewMarker = null;
   }
 
   note(nodeId: string, marker: string) {
@@ -254,9 +254,8 @@ export class MarkerCount {
   }
 
   updateNodeMarker(oldMarker: string, newMarker: string) {
-    if (oldMarker === this.getCorrectMarker()) {
-      // The correct cycle marker has been updated
-      this.correctMarker = newMarker;
+    if (oldMarker === this.heap[0][0]) {
+      this.possibleNewMarker = newMarker;
     }
     this.markerCount.set(oldMarker, this.markerCount.get(oldMarker) - 1);
     if (this.markerCount.get(oldMarker) === 0) {
@@ -265,12 +264,18 @@ export class MarkerCount {
     this.increment(newMarker);
   }
 
-  getCorrectMarker() {
-    if (this.correctMarker === null) {
-      return this.heap[0][0];
-    } else {
-      return this.correctMarker;
+  verifyMarker(marker: string): boolean {
+    if (marker === this.heap[0][0]) {
+      return true;
     }
+    if (marker === this.possibleNewMarker) {
+      return true;
+    }
+    return false;
+  }
+
+  getCorrectMarker(): string {
+    return this.heap[0][0];
   }
 
   heapify() {

@@ -537,7 +537,7 @@ export class Node {
       return;
     }
     this.cycleMarkerCount.note(nodeId, data.cycleMarker)
-    if(this.cycleMarkerCount.getCorrectMarker() !== data.cycleMarker) {
+    if(!this.cycleMarkerCount.verifyMarker(data.cycleMarker)) {
       Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with cycleMarker ${data.cycleMarker}. Expected ${this.cycleMarkerCount.getCorrectMarker()}.`);
       this.removed(nodeId)
       return;
