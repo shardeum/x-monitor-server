@@ -326,7 +326,6 @@ app.use("/api", APIRoutes);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
-  Logger.mainLogger.error(req)
   const error = new Error("API not found!");
   error.message = "404";
   return next(error);
@@ -334,7 +333,7 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
   Logger.mainLogger.error('Caught error in error handling middleware', err)
-  Logger.mainLogger.error(req)
+  Logger.mainLogger.error('Request:', req.url)
 
   return res.status(err.status || 500).json({
     error: {

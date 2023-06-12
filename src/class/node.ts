@@ -149,7 +149,7 @@ export class Node {
     const url = `http://${config.archiver.ip}:${config.archiver.port}/cycleinfo/1`;
     Logger.mainLogger.info(`Getting archiver cycle record from ${url}`)
     const data = await axios.get(url).then(res => {
-      if (res.status !== 200 || res.data.cycleInfo.length === 0) { 
+      if (res.status !== 200 || res.data.cycleInfo.length === 0) {
         throw new Error(`Unable to query cycleInfo from archiver. Received response: ${JSON.stringify(res.data)}`)
       }
       return res.data
@@ -232,7 +232,7 @@ export class Node {
   }
 
   getExistingActiveNode(nodeId: string, nodeIpInfo: NodeIpInfo): ActiveReport {
-    Logger.mainLogger.debug(
+    if (config.verboseLog) Logger.mainLogger.debug(
       'Checking existing active node.',
       nodeId,
       nodeIpInfo
@@ -258,12 +258,12 @@ export class Node {
     } catch (e) {
       Logger.mainLogger.error('Error while checking active node', e);
     }
-    Logger.mainLogger.debug('No existing active node found.');
+    if (config.verboseLog) Logger.mainLogger.debug('No existing active node found.');
     return;
   }
 
   getExistingSyncingNode(nodeId: string, nodeIpInfo: NodeIpInfo): SyncReport {
-    Logger.mainLogger.debug(
+    if (config.verboseLog) Logger.mainLogger.debug(
       'Checking existing syncing node.',
       nodeId,
       nodeIpInfo
@@ -289,12 +289,12 @@ export class Node {
     } catch (e) {
       Logger.mainLogger.error('Error while chcking syncing node', e);
     }
-    Logger.mainLogger.debug('No existing syncing node found.');
+    if (config.verboseLog) Logger.mainLogger.debug('No existing syncing node found.');
     return;
   }
 
   getExistingStandbyNode(publicKey: string, nodeIpInfo: NodeIpInfo): string {
-    Logger.mainLogger.debug(
+    if (config.verboseLog) Logger.mainLogger.debug(
         'Checking existing standby node.',
         publicKey,
         nodeIpInfo
@@ -320,7 +320,7 @@ export class Node {
     } catch (e) {
       Logger.mainLogger.error('Error while checking standby node', e);
     }
-    Logger.mainLogger.debug('No existing standby node found.');
+    if (config.verboseLog) Logger.mainLogger.debug('No existing standby node found.');
     return;
   }
 
@@ -658,22 +658,28 @@ export class Node {
   }
 
   updateAvgAndMaxTps() {
+    if (config.verboseLog) Logger.mainLogger.info('Running updateAvgAndMaxTps')
     ProfilerModule.profilerInstance.profileSectionStart('updateAvgAndMaxTps');
-    let diffRatio = 0;
-    if (Object.keys(this.nodes.active).length === 0) return;
-    const newAvgTps = Math.round(
-      (this.totalProcessed - this.lastTotalProcessed) /
+    try {
+      let diffRatio = 0;
+      if (Object.keys(this.nodes.active).length === 0) return;
+      const newAvgTps = Math.round(
+        (this.totalProcessed - this.lastTotalProcessed) /
         (this.reportInterval / 1000)
-    );
-    if (this.avgTps > 0) diffRatio = (newAvgTps - this.avgTps) / this.avgTps;
-    if (diffRatio < 1.5 || diffRatio > 0.5) {
-      if (newAvgTps > this.maxTps) {
-        this.maxTps = newAvgTps;
+      );
+      if (this.avgTps > 0) diffRatio = (newAvgTps - this.avgTps) / this.avgTps;
+      if (diffRatio < 1.5 || diffRatio > 0.5) {
+        if (newAvgTps > this.maxTps) {
+          this.maxTps = newAvgTps;
+        }
       }
+      this.avgTps = newAvgTps;
+      this.lastTotalProcessed = this.totalProcessed;
+      this.checkDeadOrAlive();
+    } catch(e) {
+      Logger.mainLogger.error(`Error in updateAvgAndMaxTps: ${e.message}`);
     }
-    this.avgTps = newAvgTps;
-    this.lastTotalProcessed = this.totalProcessed;
-    this.checkDeadOrAlive();
+
     setTimeout(() => {
       this.updateAvgAndMaxTps();
     }, this.reportInterval);
@@ -976,7 +982,6 @@ export class Node {
     backup.rejectedTps = this.rejectedTps
     backup.lastTotalProcessed = this.lastTotalProcessed
     backup.reportInterval = this.reportInterval
-    backup.isTimerStarted = this.isTimerStarted
     backup.crashTimout = this.crashTimout
     backup.lostNodeIds = Object.fromEntries(this.lostNodeIds)
     backup.syncStatements = this.syncStatements
@@ -988,7 +993,7 @@ export class Node {
     backup.txCoverageMap = this.txCoverageMap
     backup.txCoverageCounter = this.txCoverageCounter
     backup.countedEvents = Object.fromEntries(this.countedEvents)
-    backup.bogonIpCount = this.bogonIpCount  
+    backup.bogonIpCount = this.bogonIpCount
     backup.invalidIpCount = this.invalidIpCount
     backup.appData = Object.fromEntries(this.appData)
     // console.log("BackingUp:",JSON.stringify(this.nodes));
@@ -1013,7 +1018,6 @@ export class Node {
       this.rejectedTps = stats.rejectedTps
       this.lastTotalProcessed = stats.lastTotalProcessed
       this.reportInterval = stats.reportInterval
-      this.isTimerStarted = stats.isTimerStarted
       this.crashTimout = stats.crashTimout
       this.lostNodeIds = new Map(Object.entries(stats.lostNodeIds))
       this.syncStatements = stats.syncStatements
@@ -1025,7 +1029,7 @@ export class Node {
       this.txCoverageMap = stats.txCoverageMap
       this.txCoverageCounter = stats.txCoverageCounter
       this.countedEvents = new Map(Object.entries(stats.countedEvents))
-      this.bogonIpCount = stats.bogonIpCount        
+      this.bogonIpCount = stats.bogonIpCount
       this.invalidIpCount = stats.invalidIpCount
       this.appData = new Map(Object.entries(stats.appData))
   }

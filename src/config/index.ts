@@ -22,9 +22,9 @@ let config = {
     ip: process.env.ARCHIVERIP || "127.0.0.1",
     port: process.env.ARCHIVERPORT || "4000",
   },
+  verboseLog: false
 };
 
 console.log('monitor config', config)
 
 export default config
-
