@@ -709,7 +709,7 @@ export class Node {
       if (this.nodes.active[nodeId].timestamp < Date.now() - this.crashTimout) {
         const data = this.nodes.active[nodeId];
         this.nodes.active[nodeId].crashed = true;
-        this.history[nodeId].crashed = this.nodes.active[nodeId].timestamp;
+        if (this.history[nodeId]) this.history[nodeId].crashed = this.nodes.active[nodeId].timestamp;
         if (!this.crashedNodes[nodeId]) {
           this.crashedNodes[nodeId] = data;
           Logger.historyLogger.info(
