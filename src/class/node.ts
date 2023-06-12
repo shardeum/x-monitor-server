@@ -97,7 +97,8 @@ export class Node {
 
     setInterval(this.updateRejectedTps.bind(this), this.reportInterval);
 
-    setInterval(this.checkStandbyNodes.bind(this), 5000)
+    setInterval(this.checkStandbyNodes.bind(this), 1000 * 60 * 5); // Check standby nodes every 5 minutes
+    setInterval(this.checkSyncingNode.bind(this), 1000 * 60 * 1); // Check syncing nodes every cycle
   }
 
 
@@ -191,18 +192,39 @@ export class Node {
       })
     }
   }
+  checkSyncingNode() {
+    for (let nodeId in this.nodes.joining) {
+      const nodeIpInfo: NodeIpInfo = this.nodes.syncing[nodeId].nodeIpInfo;
+      const url = `http://${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort}/nodeinfo`;
+      axios.get(url).then(res => {
+        if (res.status !== 200) {
+          Logger.mainLogger.warn(`Syncing node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is not online`)
+          delete this.nodes.syncing[nodeId];
+        } else if (res.status === 200) {
+          const nodeInfo = res.data;
+          if (nodeInfo == null || nodeInfo.status !== 'syncing') {
+            Logger.mainLogger.info(`Syncing node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is no longer syncing`)
+            delete this.nodes.syncing[nodeId];
+          }
+        }
+      }).catch(err => {
+        Logger.mainLogger.warn(`Syncing node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is not online`)
+        delete this.nodes.syncing[nodeId];
+      })
+    }
+  }
   joining(publicKey: string, nodeIpInfo: NodeIpInfo): void {
     if (config.allowBogon === false) {
       if (isBogonIP(nodeIpInfo.externalIp)) {
         this.bogonIpCount.joining++
-        Logger.mainLogger.info(`Received bogon ip at joining report. public key: ${publicKey}, nodeIpInfo: ${JSON.stringify(nodeIpInfo)}`);
+        if (config.verboseLog) Logger.mainLogger.info(`Received bogon ip at joining report. public key: ${publicKey}, nodeIpInfo: ${JSON.stringify(nodeIpInfo)}`);
         return
       }
     } else {
       //even if not checking bogon still reject other invalid IPs that would be unusable
       if (isInvalidIP(nodeIpInfo.externalIp)) {
         this.invalidIpCount.joining++
-        Logger.mainLogger.info(`Received invalid ip at joining report. public key: ${publicKey}, nodeIpInfo: ${JSON.stringify(nodeIpInfo)}`);
+        if (config.verboseLog) Logger.mainLogger.info(`Received invalid ip at joining report. public key: ${publicKey}, nodeIpInfo: ${JSON.stringify(nodeIpInfo)}`);
         return
       }
     }
@@ -329,7 +351,7 @@ export class Node {
       if (config.allowBogon === false) {
         if (isBogonIP(nodeIpInfo.externalIp)) {
           this.bogonIpCount.joined++
-          Logger.mainLogger.info(`Received bogon ip at joined report. public key: ${publicKey}, nodeId: ${nodeId}, nodeIpInfo: ${JSON.stringify(nodeIpInfo)}`);
+          if (config.verboseLog) Logger.mainLogger.info(`Received bogon ip at joined report. public key: ${publicKey}, nodeId: ${nodeId}, nodeIpInfo: ${JSON.stringify(nodeIpInfo)}`);
           return
         }
       } else {
@@ -505,7 +527,7 @@ export class Node {
       if (config.allowBogon === false) {
         if (isBogonIP(data.nodeIpInfo.externalIp)) {
           this.bogonIpCount.heartbeat++
-          Logger.mainLogger.info(`Received bogon ip at heartbeat data. nodeId: ${nodeId}, nodeIpInfo: ${JSON.stringify(data.nodeIpInfo.externalIp)}`);
+          if (config.verboseLog) Logger.mainLogger.info(`Received bogon ip at heartbeat data. nodeId: ${nodeId}, nodeIpInfo: ${JSON.stringify(data.nodeIpInfo.externalIp)}`);
           return
         }
       } else {
@@ -528,7 +550,7 @@ export class Node {
       return;
     }
     const {cycleRecordCounter, cycleRecordTimestamp} = this.calculateCycleRecordCounter();
-    if (!(data.cycleCounter && Math.abs(data.cycleCounter - cycleRecordCounter) < 2)) {
+    if (!(data.cycleCounter && Math.abs(data.cycleCounter - cycleRecordCounter) < 3)) {
       Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with cycleCounter ${data.cycleCounter}. Expected ${cycleRecordCounter}.`);
       return;
     }
@@ -676,6 +698,7 @@ export class Node {
       this.avgTps = newAvgTps;
       this.lastTotalProcessed = this.totalProcessed;
       this.checkDeadOrAlive();
+      this.logSummaryToConsole()
     } catch(e) {
       Logger.mainLogger.error(`Error in updateAvgAndMaxTps: ${e.message}`);
     }
@@ -684,6 +707,11 @@ export class Node {
       this.updateAvgAndMaxTps();
     }, this.reportInterval);
     ProfilerModule.profilerInstance.profileSectionEnd('updateAvgAndMaxTps');
+  }
+
+  logSummaryToConsole() {
+    console.log('---------Node Summary---------------');
+    console.log(`Standby: ${Object.keys(this.nodes.joining).length}, syncing: ${Object.keys(this.nodes.syncing).length}, active: ${Object.keys(this.nodes.active).length}`);
   }
 
   updateRejectedTps() {
