@@ -193,7 +193,7 @@ export class Node {
     }
   }
   checkSyncingNode() {
-    for (let nodeId in this.nodes.joining) {
+    for (let nodeId in this.nodes.syncing) {
       const nodeIpInfo: NodeIpInfo = this.nodes.syncing[nodeId].nodeIpInfo;
       const url = `http://${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort}/nodeinfo`;
       axios.get(url).then(res => {
@@ -418,11 +418,13 @@ export class Node {
     try {
       delete this.nodes.syncing[nodeId];
       // this.nodes.active[nodeId] = {} as ActiveReport;
-      if (this.history[nodeId]) this.history[nodeId].active = Date.now();
-      const nodeData = this.history[nodeId].data;
-      Logger.historyLogger.info(
-        `active ${nodeId} ${nodeData.nodeIpInfo.externalIp} ${nodeData.nodeIpInfo.externalPort} ${this.counter}`
-      );
+      if (this.history[nodeId]) {
+        this.history[nodeId].active = Date.now();
+        const nodeData = this.history[nodeId].data;
+        Logger.historyLogger.info(
+          `active ${nodeId} ${nodeData.nodeIpInfo.externalIp} ${nodeData.nodeIpInfo.externalPort} ${this.counter}`
+        );
+      }
     } catch (e) {
       Logger.mainLogger.error(e);
     }
