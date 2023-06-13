@@ -136,6 +136,7 @@ class Logger {
 export let mainLogger: any;
 export let historyLogger: any;
 export let errorLogger: any;
+export let ignoredLogger: any;
 
 export function initLogger(baseDir: string, logsConfig: LogsConfiguration) {
   let logger = new Logger(baseDir, logsConfig);
@@ -144,6 +145,7 @@ export function initLogger(baseDir: string, logsConfig: LogsConfiguration) {
   mainLogger = logger.getLogger("main");
   historyLogger = logger.getLogger("history");
   errorLogger = logger.getLogger("errorFile");
+  ignoredLogger = logger.getLogger("ignored");
 }
 
 export default Logger;

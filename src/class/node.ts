@@ -548,21 +548,21 @@ export class Node {
 
     // Check for valid heartbeat
     if (this.networkId !== data.networkId) {
-      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with different networkId ${data.networkId}.`);
+      Logger.ignoredLogger.info(`NETWORKID: node ${nodeId} with ${data.networkId} expected ${this.networkId}.`);
       return;
     }
     const {cycleRecordCounter, cycleRecordTimestamp} = this.calculateCycleRecordCounter();
     if (!(data.cycleCounter && Math.abs(data.cycleCounter - cycleRecordCounter) < 3)) {
-      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with cycleCounter ${data.cycleCounter}. Expected ${cycleRecordCounter}.`);
+      Logger.ignoredLogger.info(`CYCLECOUNTER: node ${nodeId} with ${data.cycleCounter} expected ${cycleRecordCounter}.`);
       return;
     }
     if (!(data.timestamp && Math.abs(data.timestamp - cycleRecordTimestamp) < 60)) {
-      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with timestamp ${data.timestamp}. Expected ${cycleRecordTimestamp}.`);
+      Logger.ignoredLogger.info(`TIMESTAMP: node ${nodeId} with ${data.timestamp} expected ${cycleRecordTimestamp}.`);
       return;
     }
     this.cycleMarkerCount.note(nodeId, data.cycleMarker)
     if(!this.cycleMarkerCount.verifyMarker(data.cycleMarker)) {
-      Logger.mainLogger.info(`Ignoring heartbeat from node ${nodeId} with cycleMarker ${data.cycleMarker}. Expected ${this.cycleMarkerCount.getCorrectMarker()}.`);
+      Logger.ignoredLogger.info(`CYCLEMARKER: node ${nodeId} with ${data.cycleMarker} expected ${this.cycleMarkerCount.getCorrectMarker()}.`);
       this.removed(nodeId)
       return;
     }
