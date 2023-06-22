@@ -17,6 +17,7 @@ const mock = require('./mock');
 const countedEvents = require('./countedEvents');
 const invalidIPs = require('./invalidIPs');
 const appVersions = require('./appVersions');
+const version = require('./version')
 
 export const Controller = {
   joining,
@@ -38,4 +39,5 @@ export const Controller = {
   countedEvents,
   invalidIPs,
   appVersions,
+  version
 };

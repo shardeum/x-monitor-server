@@ -36,6 +36,20 @@ const clientModule = require.resolve("@shardus/monitor-client");
 const clientDirectory = path.dirname(clientModule);
 const viewDirectory = path.join(clientDirectory + "/views");
 const staticDirectory = path.resolve(clientDirectory + "/public");
+const clientVersionDirectory = path.join(clientDirectory + "/package.json");
+const serverVersionDirectory = path.join(path.dirname(path.dirname(path.dirname(require.main.filename))), 'package.json');
+
+const clientPackageJson = fs.readFileSync(clientVersionDirectory, 'utf8')
+const serverPackageJson = fs.readFileSync(serverVersionDirectory, 'utf8')
+
+const clientPackageData = JSON.parse(clientPackageJson)
+const serverPackageData = JSON.parse(serverPackageJson)
+
+export const clientPackageVersion = clientPackageData.version
+export const serverPackageVersion = serverPackageData.version
+
+console.log("client version: ", clientPackageVersion)
+console.log("server version: ", serverPackageVersion)
 
 console.log("Client directory", clientDirectory)
 import logsConfig from './config/monitor-log';
@@ -176,6 +190,9 @@ app.get("/", (req, res) => {
   }
 
   res.render("index.html", {title: "test"});
+});
+app.get("/version", (req, res) => {
+  res.render("version.html", {title: "test"});
 });
 app.get("/signin", (req, res) => {
   res.render("signin.html", {title: "test"});
@@ -355,6 +372,7 @@ Logger.mainLogger.info(`filePath: ${path.resolve(file)}`);
 
 io.on("connection", (socket) => {
   console.log("A client connected", socket.id);
+  io.emit("versions", { clientPackageVersion, serverPackageVersion});
   if (!fileSubscribers[socket.id]) {
     fileSubscribers[socket.id] = true;
     fs.readFile(filePath, "utf-8", (error, data) => {
