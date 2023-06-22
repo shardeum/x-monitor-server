@@ -7,7 +7,7 @@ const version = (
   res: Response,
   next: NextFunction
 ) => {
-  const versionsObj = { clientPackageVersion, serverPackageVersion}
+  const versionsObj = { clientPackageVersion, serverPackageVersion }
   res.status(200).send(versionsObj);
 };
 

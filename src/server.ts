@@ -48,9 +48,6 @@ const serverPackageData = JSON.parse(serverPackageJson)
 export const clientPackageVersion = clientPackageData.version
 export const serverPackageVersion = serverPackageData.version
 
-console.log("client version: ", clientPackageVersion)
-console.log("server version: ", serverPackageVersion)
-
 console.log("Client directory", clientDirectory)
 import logsConfig from './config/monitor-log';
 import {mainLogger} from "./class/logger";
@@ -190,9 +187,6 @@ app.get("/", (req, res) => {
   }
 
   res.render("index.html", {title: "test"});
-});
-app.get("/version", (req, res) => {
-  res.render("version.html", {title: "test"});
 });
 app.get("/signin", (req, res) => {
   res.render("signin.html", {title: "test"});
