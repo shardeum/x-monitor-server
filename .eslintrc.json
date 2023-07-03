@@ -1,0 +1,38 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "env": {
+    "node": true
+  },
+  "plugins": ["@typescript-eslint", "security"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:security/recommended",
+    "prettier"
+  ],
+  "ignorePatterns": [
+    "**/api/index.ts",
+    "**/class/**/*.ts",
+    "**/config/**/*.ts",
+    "**/controller/**/*.ts",
+    "**/interface/interface.ts",
+    "**/middleware/**/*.ts",
+    "**/services/passport.ts",
+    "**/utils/index.ts",
+    "server.ts"
+  ],
+  "rules": {
+    "no-empty": [
+      1,
+      {
+        "allowEmptyCatch": true
+      }
+    ],
+    "@typescript-eslint/camelcase": "off",
+    "@typescript-eslint/member-delimiter-style": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/explicit-function-return-type": "error"
+  }
+}

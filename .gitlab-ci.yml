@@ -1,0 +1,36 @@
+stages:
+  - build
+
+cache:
+  paths:
+    - node_modules/
+
+image: 'registry.gitlab.com/shardus/dev-container'
+
+before_script:
+  - node -v
+
+# Build Job: Compiles the code
+build-job:
+  stage: build
+  script:
+    - echo "Compiling the code..."
+    - npm ci # Clean install of project dependencies
+    - npm run compile
+    - echo "Compile complete."
+
+# Lint Job: Runs ESLint for code linting
+lint-job:
+  stage: build
+  script:
+    - echo "Running ESlint..."
+    - npm run lint
+    - echo "Running ESlint complete."
+
+# Format Checker Job: Runs a code formatter
+format-checker-job:
+  stage: build
+  script:
+    - echo "Running code formatter..."
+    - npm run format-check
+    - echo "Code formatting complete."
