@@ -17,6 +17,7 @@ import {
   NodeInfoAppData,
 } from '../interface/interface';
 import { isBogonIP, isInvalidIP, mapToObjectRecursive, MarkerCount } from '../utils';
+import { getFromArchiver } from '@shardus/archiver-discovery';
 
 type TxCoverageData = {
   txId: string;
@@ -147,16 +148,14 @@ export class Node {
   }
 
   async getArchiverCycleRecord() {
-    const url = `http://${config.archiver.ip}:${config.archiver.port}/cycleinfo/1`;
-    Logger.mainLogger.info(`Getting archiver cycle record from ${url}`)
-    const data = await axios.get(url).then(res => {
-      if (res.status !== 200 || res.data.cycleInfo.length === 0) {
-        throw new Error(`Unable to query cycleInfo from archiver. Received response: ${JSON.stringify(res.data)}`)
-      }
-      return res.data
-    })
-    return data
+    const cycleRecord = getFromArchiver('cycleinfo/1');
+    Logger.mainLogger.info(`Getting archiver cycle record`)
+    if (cycleRecord===null) {
+      throw new Error(`Unable to query cycleInfo from any archiver.`)
+    }
+    return cycleRecord;
   }
+  
   applyArchiverCycleData(cycleRecord) {
     Logger.mainLogger.info(`Creating archiver cycle record with data: ${JSON.stringify(cycleRecord)}`)
     this.cycleRecordStart = cycleRecord.cycleInfo[0].start

@@ -18,10 +18,6 @@ let config = {
     nodelist_path: join(__dirname, '../../', 'cold_nodelist.json'),
     networkStat_path: join(__dirname, '../../', 'cold_networkStat.json')
   },
-  archiver: {
-    ip: process.env.ARCHIVERIP || "127.0.0.1",
-    port: process.env.ARCHIVERPORT || "4000",
-  },
   verboseLog: false
 };
 

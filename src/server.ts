@@ -52,6 +52,7 @@ console.log("Client directory", clientDirectory)
 import logsConfig from './config/monitor-log';
 import {mainLogger} from "./class/logger";
 import { NodeList } from './interface/interface';
+import { setupArchiverDiscovery } from '@shardus/archiver-discovery';
 
 const logDir = `monitor-logs`;
 const baseDir = ".";
@@ -429,7 +430,12 @@ const start = () => {
   });
 };
 
-start();
+setupArchiverDiscovery({
+  customConfigPath: 'archiverConfig.json',
+}).then(() => {
+  console.log('Finished setting up archiver discovery!');
+  start();
+});
 
 process.on('SIGINT', async () => {
   graceful_shutdown();
