@@ -147,7 +147,7 @@ export class Node {
     })
   }
 
-  async getArchiverCycleRecord() {
+  async getArchiverCycleRecord(): Promise<unknown> {
     const cycleRecord = getFromArchiver('cycleinfo/1');
     Logger.mainLogger.info(`Getting archiver cycle record`)
     if (cycleRecord===null) {

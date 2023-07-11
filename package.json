@@ -39,7 +39,7 @@
     "node": "18.16.1"
   },
   "dependencies": {
-    "@shardus/archiver-discovery": "1.0.2",
+    "@shardus/archiver-discovery": "1.0.3",
     "@shardus/monitor-client": "2.5.6",
     "axios": "0.24.0",
     "bcrypt-nodejs": "0.0.3",
