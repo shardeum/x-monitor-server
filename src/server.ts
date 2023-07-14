@@ -203,7 +203,7 @@ app.get("/favicon.ico", (req, res) => {
 
 app.get("/history-log", (req, res) => {
   console.log("log server page");
-  res.render("history-log.html", { title: "test" });
+  res.render("history-log.html", {title: "test"});
 });
 
 app.get("/large-network", (req, res) => {
@@ -211,7 +211,7 @@ app.get("/large-network", (req, res) => {
 });
 
 app.get("/sync", (req, res) => {
-    res.render("sync.html");
+  res.render("sync.html");
 });
 
 app.get("/chart", (req, res) => {
@@ -367,14 +367,14 @@ Logger.mainLogger.info(`filePath: ${path.resolve(file)}`);
 
 io.on("connection", (socket) => {
   console.log("A client connected", socket.id);
-  io.emit("versions", { clientPackageVersion, serverPackageVersion});
+  io.emit("versions", {clientPackageVersion, serverPackageVersion});
   if (!fileSubscribers[socket.id]) {
     fileSubscribers[socket.id] = true;
     fs.readFile(filePath, "utf-8", (error, data) => {
       if (!data) {
         data = "Found no previous log.";
       }
-        // console.log('data', data.split("\n"))
+      // console.log('data', data.split("\n"))
       io.emit("old-data", data);
     });
   }
@@ -425,17 +425,21 @@ const start = () => {
       throw err;
     }
     console.log(`server started on port ${CONFIG.port} (${CONFIG.env})`);
-      console.log('history logger', Logger.historyLogger.info)
+    console.log('history logger', Logger.historyLogger.info)
     Logger.historyLogger.info(`started`);
   });
 };
 
+let archiverConfigFilePath = path.resolve(__dirname, '../../archiverConfig.json')
+console.log(`archiverConfigFilePath`, archiverConfigFilePath)
 setupArchiverDiscovery({
-  customConfigPath: 'archiverConfig.json',
+  customConfigPath: archiverConfigFilePath,
 }).then(() => {
   console.log('Finished setting up archiver discovery!');
   start();
-});
+}).catch((e) => {
+  console.error('Error setting up archiver discovery', e);
+})
 
 process.on('SIGINT', async () => {
   graceful_shutdown();
@@ -450,13 +454,13 @@ process.on('SIGTERM', async () => {
   graceful_shutdown();
 })
 
-function graceful_shutdown(){
-  try{
+function graceful_shutdown() {
+  try {
     global.node.createNodeListBackup(CONFIG.backup.nodelist_path);
     global.node.createNetworkStatBackup(CONFIG.backup.networkStat_path);
-  }catch(e:any){
+  } catch (e: any) {
     console.error(e);
-  }finally{
+  } finally {
     process.exit(0);
   }
 }
