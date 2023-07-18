@@ -133,11 +133,15 @@ export class Node {
             Logger.mainLogger.warn(`Retries left: ${retiresLeft}. Retrying in 10 seconds...`)
           })
       }, 10000)
-    }).then(cycleRecord => {
-      this.applyArchiverCycleData(cycleRecord)
-      Logger.mainLogger.info(
-        `Archiver cycle record obtained. Ready to receive and validate heartbeats.`
-      )
+    }).then((cycleRecord: any) => {
+      if (cycleRecord && cycleRecord.cycleInfo && cycleRecord.cycleInfo.length > 0) {
+        this.applyArchiverCycleData(cycleRecord)
+        Logger.mainLogger.info(
+          `Archiver cycle record obtained. Ready to receive and validate heartbeats.`
+        )
+      } else {
+        Logger.mainLogger.error(`Received empty cycle record from archiver`)
+      }
     }).catch(err => {
       Logger.mainLogger.error(
         'FAILED TO GET ARCHIVER CYCLE RECORD. '
@@ -148,15 +152,21 @@ export class Node {
   }
 
   async getArchiverCycleRecord(): Promise<unknown> {
-    const cycleRecord = getFromArchiver('cycleinfo/1');
-    Logger.mainLogger.info(`Getting archiver cycle record`)
+    const cycleRecord: any = await getFromArchiver('cycleinfo/1');
+    Logger.mainLogger.info(`Getting archiver cycle record ${JSON.stringify(cycleRecord)}`)
     if (cycleRecord===null) {
       throw new Error(`Unable to query cycleInfo from any archiver.`)
+    }
+    if (cycleRecord.cycleInfo == null || cycleRecord.cycleInfo.length === 0) {
+      throw new Error(`Received empty cycleInfo from archiver. ${JSON.stringify(cycleRecord)}`)
     }
     return cycleRecord;
   }
   
   applyArchiverCycleData(cycleRecord) {
+    if (cycleRecord == null) return
+    if (cycleRecord.cycleInfo == null) return
+    if (cycleRecord.cycleInfo.length === 0) return
     Logger.mainLogger.info(`Creating archiver cycle record with data: ${JSON.stringify(cycleRecord)}`)
     this.cycleRecordStart = cycleRecord.cycleInfo[0].start
     this.cycleRecordCounter = cycleRecord.cycleInfo[0].counter
@@ -414,8 +424,9 @@ export class Node {
   }
 
   active(nodeId: string): void {
+    if (config.verboseLog) Logger.mainLogger.info(`Received active report for nodeId: ${nodeId}`)
     try {
-      delete this.nodes.syncing[nodeId];
+      if (this.nodes.syncing[nodeId]) delete this.nodes.syncing[nodeId];
       // this.nodes.active[nodeId] = {} as ActiveReport;
       if (this.history[nodeId]) {
         this.history[nodeId].active = Date.now();
@@ -520,6 +531,7 @@ export class Node {
   }
 
   async heartbeat(nodeId: string, data: ActiveReport): Promise<void> {
+    if (config.verboseLog) Logger.mainLogger.info(`Running heartbeat for nodeId: ${nodeId}, data: ${JSON.stringify(data)}`)
     if (this.networkId === 'none') { // Not yet received cycleRecord from Archiver. Not ready for heartbeat.
       return
     }
