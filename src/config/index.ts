@@ -1,4 +1,5 @@
 import { join } from 'path';
+require("dotenv").config();
 let config = {
   env: process.env.NODE_ENV?.toLowerCase() || "release", // "debug"
   host: process.env.HOST || "127.0.0.1",
@@ -11,7 +12,7 @@ let config = {
   removeCrashedNode: true,
   nodeCrashTimeout: 1000 * 60 * 2, // 2 min
   secret: 'Decentralization for everyone',
-  username: process.env.USERNAME || 'admin',
+  username: process.env.NAME || 'admin',
   password: process.env.PASSWORD || 'password',
   backup: {
     enabled: true,
