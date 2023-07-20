@@ -1,3 +1,4 @@
+require("dotenv").config();
 import {UserDB} from './class/user'
 
 global.User = new UserDB()
@@ -104,18 +105,20 @@ Logger.initLogger(baseDir, logsConfig);
 const node = new Node();
 global.node = node;
 
-try {
-  let jsonData = fs.readFileSync(CONFIG.backup.nodelist_path, 'utf8');
-  const restoreNodelist = JSON.parse(jsonData);
-  console.log("Found node list backup file restoring. . . ");
-  global.node.setNodeList(restoreNodelist);
-
-  jsonData = fs.readFileSync(CONFIG.backup.networkStat_path, 'utf8');
-  const restoreNetworkStats = JSON.parse(jsonData);
-  console.log("Found network stat backup file restoring. . . ");
-  global.node.setNetworkStat(restoreNetworkStats);
-} catch (err) {
-  console.error(err);
+if (CONFIG.restoreFromBackup) {
+  try {
+    let jsonData = fs.readFileSync(CONFIG.backup.nodelist_path, 'utf8');
+    const restoreNodelist = JSON.parse(jsonData);
+    console.log("Found node list backup file restoring. . . ");
+    global.node.setNodeList(restoreNodelist);
+  
+    jsonData = fs.readFileSync(CONFIG.backup.networkStat_path, 'utf8');
+    const restoreNetworkStats = JSON.parse(jsonData);
+    console.log("Found network stat backup file restoring. . . ");
+    global.node.setNetworkStat(restoreNetworkStats);
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 let nestedCounter = new NestedCounters(app);
@@ -430,10 +433,19 @@ const start = () => {
   });
 };
 
-let archiverConfigFilePath = path.resolve(__dirname, '../../archiverConfig.json')
+let archiverConfigFilePath = path.resolve(process.cwd(), '../archiverConfig.json')
+if (fs.existsSync(archiverConfigFilePath)) {
+  console.log('Found archiverConfig.json file at', archiverConfigFilePath)
+} else {
+  archiverConfigFilePath = path.resolve(process.cwd(), 'archiverConfig.json')
+}
+
+console.log(`ARCHIVER_INFO ENV`, process.env.ARCHIVER_INFO)
 console.log(`archiverConfigFilePath`, archiverConfigFilePath)
+
 setupArchiverDiscovery({
   customConfigPath: archiverConfigFilePath,
+  customArchiverListEnv: 'ARCHIVER_INFO'
 }).then(() => {
   console.log('Finished setting up archiver discovery!');
   start();

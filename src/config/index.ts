@@ -14,6 +14,7 @@ let config = {
   secret: 'Decentralization for everyone',
   username: process.env.NAME || 'admin',
   password: process.env.PASSWORD || 'password',
+  restoreFromBackup: false,
   backup: {
     enabled: true,
     nodelist_path: join(__dirname, '../../', 'cold_nodelist.json'),
