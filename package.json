@@ -1,12 +1,13 @@
 {
   "name": "@shardus/monitor-server",
-  "version": "2.5.9",
+  "version": "2.6.0",
   "description": "Monitor server for the Shardus Enterprise server.",
   "main": "build/src/server.js",
   "types": "build/src/server.d.ts",
   "files": [
     "build/**/*",
-    "src/**/*"
+    "src/**/*",
+    "archiverConfig.json"
   ],
   "scripts": {
     "release": "np --no-tests --no-yarn",
