@@ -57,6 +57,8 @@ export class Node {
   cycleRecordCounter: number;
   cycleDuration: number;
   cycleMarkerCount: MarkerCount;
+  queryArchiverInterval: NodeJS.Timeout;
+  queryArchiverIntervalTime: number;
 
   constructor() {
 
@@ -92,7 +94,8 @@ export class Node {
     this.cycleRecordCounter = -1
     this.queryArchiverRetries()
 
-    setInterval(this.queryArchiverRetries.bind(this), 20 * 60 * 1000) // Update cycleRecord every 20 minutes
+    this.queryArchiverIntervalTime = 20 * 60 * 1000 // Update cycleRecord every 20 minutes
+    this.queryArchiverInterval = setInterval(this.queryArchiverRetries.bind(this), this.queryArchiverIntervalTime)
 
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
 
@@ -175,8 +178,20 @@ export class Node {
     Logger.mainLogger.info(
       `Archiver cycle record created with start: 
       ${this.cycleRecordStart}, counter: ${this.cycleRecordCounter}, 
-      duration: ${this.cycleDuration}, networkId: ${this.networkId}`
+      duration: ${this.cycleDuration}, networkId: ${this.networkId}, 
+      mode: ${cycleRecord.cycleInfo[0].mode}`
     )
+    if (cycleRecord.cycleInfo[0].mode === 'shutdown') {
+      Logger.mainLogger.info(`Archiver latest cycle record indicates shutdown mode.`)
+      clearInterval(this.queryArchiverInterval)
+      this.queryArchiverIntervalTime = 1000 * 60 // Check every minute
+      this.queryArchiverInterval = setInterval(this.queryArchiverRetries.bind(this), this.queryArchiverIntervalTime)
+    } else if (this.queryArchiverIntervalTime === 1000 * 60) {
+      clearInterval(this.queryArchiverInterval)
+      // Set back to 20 minutes
+      this.queryArchiverIntervalTime = 20 * 60 * 1000 // Update cycleRecord every 20 minutes
+      this.queryArchiverInterval = setInterval(this.queryArchiverRetries.bind(this), this.queryArchiverIntervalTime)
+    }
   }
   calculateCycleRecordCounter() {
     const now = Date.now() / 1000;
@@ -210,7 +225,7 @@ export class Node {
           Logger.mainLogger.warn(`Syncing node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is not online`)
           delete this.nodes.syncing[nodeId];
         } else if (res.status === 200) {
-          const nodeInfo = res.data;
+          const nodeInfo = res.data.nodeInfo;
           if (nodeInfo == null || nodeInfo.status !== 'syncing') {
             Logger.mainLogger.info(`Syncing node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is no longer syncing`)
             delete this.nodes.syncing[nodeId];
