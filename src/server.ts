@@ -111,7 +111,7 @@ if (CONFIG.restoreFromBackup) {
     const restoreNodelist = JSON.parse(jsonData);
     console.log("Found node list backup file restoring. . . ");
     global.node.setNodeList(restoreNodelist);
-  
+
     jsonData = fs.readFileSync(CONFIG.backup.networkStat_path, 'utf8');
     const restoreNetworkStats = JSON.parse(jsonData);
     console.log("Found network stat backup file restoring. . . ");
@@ -235,10 +235,8 @@ app.get("/summary", async (req, res) => {
     let cycle: any = {};
     let cycleUrl;
     let configUrl;
+    let sortOrder = req.query.sortOrder || 'asc';
 
-    const joining = global.node.nodes["joining"]; // { [id: string]: { nodeIpInfo: {...} } }
-    const syncing = global.node.nodes["syncing"]; // { [id: string]: { nodeIpInfo: {...} } }
-    const active = global.node.nodes["active"]; // { [id: string]: { nodeIpInfo: {...} } }
     const removed = global.node.removedNodes[global.node.counter - 1] || []
     const node = global.node.getRandomNode()
     if (node) {
@@ -259,14 +257,28 @@ app.get("/summary", async (req, res) => {
     };
 
     for (const state in summary) {
+      let nodesArray = [];
       for (const id in global.node.nodes[state]) {
         const ip = global.node.nodes[state][id].nodeIpInfo.externalIp;
         const port = global.node.nodes[state][id].nodeIpInfo.externalPort;
-        const logStreamerServer = encodeURIComponent(`http://${ip}:3334`);
-        summary[state].push(
-          `<a href="log?ip=${ip}&port=${port}" target="_blank">[${ip}]</a>`
+        const link = `<a href="log?ip=${ip}&port=${port}" target="_blank">[${ip}:${port}]</a>`;
+
+        let index = nodesArray.findIndex((existingNode) =>
+          sortOrder === 'asc' ? `${existingNode.ip}:${existingNode.port}`.localeCompare(`${ip}:${port}`) > 0 : `${existingNode.ip}:${existingNode.port}`.localeCompare(`${ip}:${port}`) < 0
         );
+
+        if (index === -1) {
+          // If no suitable index was found, add the node at the end of the array
+          nodesArray.push({ ip, port, link });
+        } else {
+          // Otherwise, insert the node at the correct index to maintain the sorted order
+          nodesArray.splice(index, 0, { ip, port, link });
+        }
+
       }
+
+      // Push sorted links to summary
+      nodesArray.forEach(node => summary[state].push(node.link));
     }
 
     let removedHtmlStr = ``;
@@ -277,6 +289,11 @@ app.get("/summary", async (req, res) => {
     const page = `<!DOCTYPE html>
 <html>
   <body>
+    <div>
+      <label title="Sort by IP and Port">Sort:</label>
+      <button onclick="setSortOrder('asc')">Ascending</button>
+      <button onclick="setSortOrder('desc')">Descending</button>
+    </div>
     cycle: ${cycle && cycle.counter > -1 ? cycle.counter : -1}
       <br />
       <br />
@@ -312,14 +329,18 @@ app.get("/summary", async (req, res) => {
     <br /><br />
     <p>
       <pre>
-        ${
-      cycle ? JSON.stringify(cycle, null, 2) : "Cannot get cycle from nodes"
-    }
+        ${cycle ? JSON.stringify(cycle, null, 2) : "Cannot get cycle from nodes"}
       </pre>
     </p>
   </body>
 
   <script>
+    function setSortOrder(order) {
+      let url = new URL(window.location.href);
+      url.searchParams.set('sortOrder', order);
+      window.location.href = url.toString();
+    }
+
     setInterval(() => {
       console.log('reload')
       window.location.reload(true)
