@@ -281,10 +281,13 @@ app.get("/summary", async (req, res) => {
       nodesArray.forEach(node => summary[state].push(node.link));
     }
 
-    let removedHtmlStr = ``;
-    for (let node of removed) {
-      removedHtmlStr += `${node.ip} `;
-    }
+    let removedNodesArray = removed.map(node => ({
+      ip: node.ip,
+      port: node.port,
+      link: `<a href="log?ip=${node.ip}&port=${node.port}" target="_blank">[${node.ip}:${node.port}]</a>`
+    }));
+    removedNodesArray.sort((a, b) => sortOrder === 'asc' ? `${a.ip}:${a.port}`.localeCompare(`${b.ip}:${b.port}`) : `${b.ip}:${b.port}`.localeCompare(`${a.ip}:${a.port}`));
+    let removedNodeLinks = removedNodesArray.map(node => node.link);
 
     const page = `<!DOCTYPE html>
 <html>
@@ -318,7 +321,7 @@ app.get("/summary", async (req, res) => {
     removed: ${removed.length}
       <p>
         <code>
-          ${removedHtmlStr}
+          ${removedNodeLinks.join(" ")}
         </code>
       </p>
 
@@ -338,7 +341,7 @@ app.get("/summary", async (req, res) => {
     function setSortOrder(order) {
       let url = new URL(window.location.href);
       url.searchParams.set('sortOrder', order);
-      window.location.href = url.toString();
+      window.location.replace(url.toString());
     }
 
     setInterval(() => {
