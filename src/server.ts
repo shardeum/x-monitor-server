@@ -361,6 +361,25 @@ app.get("/summary", async (req, res) => {
   }
 });
 
+app.get('/get-newest-cycle', async (req, res) => {
+  try {
+    const ip = req.query.ip;
+    const port = req.query.port;
+    const url = `http://${ip}:${port}/sync-newest-cycle`;
+    const response = await get(url);
+    let body = '';
+    response.on('data', chunk => {
+      body += chunk;
+    });
+    await new Promise(resolve => response.on('end', resolve));
+    const data = JSON.parse(body);
+    res.json(data);
+  } catch (error) {
+    console.error('Error making API call to /get-newest-cycle: ', error);
+    res.status(500).json({error: 'Internal Server Error'});
+  }
+});
+
 app.use("/api", APIRoutes);
 
 // catch 404 and forward to error handler
