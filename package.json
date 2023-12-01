@@ -10,7 +10,7 @@
     "archiverConfig.json"
   ],
   "scripts": {
-    "release": "np --no-tests --no-yarn",
+    "release": "np --any-branch --no-cleanup --no-tests --no-yarn",
     "start": "node .",
     "update-docker": "sudo docker build -t registry.gitlab.com/shardus/monitor-server . && sudo docker push registry.gitlab.com/shardus/monitor-server",
     "check": "gts check",
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@shardus/archiver-discovery": "1.1.0",
-    "@shardus/monitor-client": "2.5.7",
+    "@shardus/monitor-client": "2.5.8",
     "axios": "0.24.0",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "1.18.3",
@@ -72,7 +72,7 @@
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-security": "1.7.1",
     "gts": "3.1.1",
-    "np": "7.6.0",
+    "np": "8.0.4",
     "typescript": "4.4.4"
   },
   "overrides": {
