@@ -2,6 +2,9 @@
   "name": "@shardus/monitor-server",
   "version": "2.6.0",
   "description": "Monitor server for the Shardus Enterprise server.",
+  "engines": {
+    "node": "18.16.1"
+  },
   "main": "build/src/server.js",
   "types": "build/src/server.d.ts",
   "files": [
