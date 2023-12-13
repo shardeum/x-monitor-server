@@ -52,6 +52,8 @@ export class Node {
   bogonIpCount: any
   invalidIpCount: any
   appData: Map<string, NodeInfoAppData>; // Map nodeId to appData
+  joiningAppData: Map<string, NodeInfoAppData>; // Map nodeId to appData
+  syncAppData: Map<string, NodeInfoAppData>; // Map nodeId to appData
   networkId: string; // Network ID to detect bad heartbeats
   cycleRecordStart: number;
   cycleRecordCounter: number;
@@ -86,6 +88,8 @@ export class Node {
      this.bogonIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
      this.invalidIpCount = {joining: 0, joined: 0, active: 0, heartbeat: 0}
      this.appData = new Map<string, NodeInfoAppData>();
+     this.joiningAppData = new Map<string, NodeInfoAppData>();
+     this.syncAppData = new Map<string, NodeInfoAppData>();
      this.networkId = 'none';
 
     this.nodes = this._createEmptyNodelist()
@@ -209,10 +213,12 @@ export class Node {
         if (res.status !== 200) {
           Logger.mainLogger.warn(`Standby node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is not online`)
           delete this.nodes.joining[pk];
+          this.joiningAppData.delete(pk);
         }
       }).catch(err => {
         Logger.mainLogger.warn(`Standby node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is not online`)
         delete this.nodes.joining[pk];
+        this.joiningAppData.delete(pk);
       })
     }
   }
@@ -224,20 +230,23 @@ export class Node {
         if (res.status !== 200) {
           Logger.mainLogger.warn(`Syncing node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is not online`)
           delete this.nodes.syncing[nodeId];
+          this.syncAppData.delete(nodeId);
         } else if (res.status === 200) {
           const nodeInfo = res.data.nodeInfo;
           if (nodeInfo == null || nodeInfo.status !== 'syncing') {
             Logger.mainLogger.info(`Syncing node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is no longer syncing`)
             delete this.nodes.syncing[nodeId];
+            delete this.syncAppData[nodeId];
           }
         }
       }).catch(err => {
         Logger.mainLogger.warn(`Syncing node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is not online`)
         delete this.nodes.syncing[nodeId];
+        delete this.syncAppData[nodeId];
       })
     }
   }
-  joining(publicKey: string, nodeIpInfo: NodeIpInfo): void {
+  joining(publicKey: string, nodeIpInfo: NodeIpInfo, appData: NodeInfoAppData): void {
     if (config.allowBogon === false) {
       if (isBogonIP(nodeIpInfo.externalIp)) {
         this.bogonIpCount.joining++
@@ -255,15 +264,17 @@ export class Node {
     const existingStandbyNodePublicKey = this.getExistingStandbyNode(publicKey, nodeIpInfo);
     if (existingStandbyNodePublicKey) {
       delete this.nodes.joining[existingStandbyNodePublicKey];
+      this.joiningAppData.delete(existingStandbyNodePublicKey);
       Logger.mainLogger.info(
           'Joining node is found in the standby list. Removing existing standby node'
       );
     }
     this.nodes.joining[publicKey] = {nodeIpInfo};
-
+    this.joiningAppData.set(publicKey, appData);
     const existingSyncingNode = this.getExistingSyncingNode('', nodeIpInfo);
     if (existingSyncingNode) {
       delete this.nodes.syncing[existingSyncingNode.nodeId];
+      delete this.syncAppData[existingSyncingNode.nodeId];
       Logger.mainLogger.info(
         'Joining node is found in the syncing list. Removing existing syncing node.'
       );
@@ -370,7 +381,7 @@ export class Node {
     return;
   }
 
-  joined(publicKey: string, nodeId: string, nodeIpInfo: NodeIpInfo): void {
+  joined(publicKey: string, nodeId: string, nodeIpInfo: NodeIpInfo, appData: NodeInfoAppData): void {
     try {
       if (config.allowBogon === false) {
         if (isBogonIP(nodeIpInfo.externalIp)) {
@@ -393,6 +404,7 @@ export class Node {
       const existingActiveNode = this.getExistingActiveNode(nodeId, nodeIpInfo);
       if (existingSyncingNode) {
         delete this.nodes.syncing[existingSyncingNode.nodeId];
+        delete this.syncAppData[existingSyncingNode.nodeId];
         Logger.mainLogger.info(
           'Joined node is found in the syncing list. Removing existing syncing node.'
         );
@@ -422,6 +434,7 @@ export class Node {
         nodeIpInfo,
         timestamp: Date.now(),
       };
+      this.syncAppData.set(nodeId, appData);
       if (!this.history[nodeId]) this.history[nodeId] = {};
       this.history[nodeId].joined = Date.now();
       this.history[nodeId].data = {
@@ -429,7 +442,10 @@ export class Node {
         nodeId,
       };
       this.checkCrashedBefore(this.history[nodeId].data);
-      if (this.nodes.joining[publicKey]) delete this.nodes.joining[publicKey];
+      if (this.nodes.joining[publicKey])  { 
+        delete this.nodes.joining[publicKey];
+        delete this.joiningAppData[publicKey];
+      }
       Logger.historyLogger.info(
         `joined ${nodeId} ${nodeIpInfo.externalIp} ${nodeIpInfo.externalPort} ${this.counter}`
       );
@@ -441,7 +457,10 @@ export class Node {
   active(nodeId: string): void {
     if (config.verboseLog) Logger.mainLogger.info(`Received active report for nodeId: ${nodeId}`)
     try {
-      if (this.nodes.syncing[nodeId]) delete this.nodes.syncing[nodeId];
+      if (this.nodes.syncing[nodeId]) { 
+        delete this.nodes.syncing[nodeId];
+        delete this.syncAppData[nodeId];
+      }
       // this.nodes.active[nodeId] = {} as ActiveReport;
       if (this.history[nodeId]) {
         this.history[nodeId].active = Date.now();
@@ -599,6 +618,7 @@ export class Node {
         `Found heart beating node ${nodeId} in syncing list. Removing it from syncing list.`
       );
       delete this.nodes.syncing[nodeId];
+      delete this.syncAppData[nodeId];
     }
     this.nodes.active[nodeId] = data;
     delete this.nodes.active[nodeId].txCoverage;
@@ -820,46 +840,153 @@ export class Node {
 
   getAppVersions() {
     type AppVersions = {
-      nodeCount: number;
+      activeNodeCount?: number;
+      joiningNodeCount?: number;
+      syncingNodeCount?: number;
       cliVersions: Map<string, number>;
       guiVersions: Map<string, number>;
-    }
+    };
 
     // Set the total number of nodes for each version
-    // For each version, also set a breakdown of CLI and GUI version counts
-    const aggregatedAppVersion = new Map<string, AppVersions>()
+    const aggregatedAppVersion = new Map<string, AppVersions>();
+
+    // Iterate over active nodes
     for (const nodeId in this.nodes.active) {
       const appData = this.appData.get(nodeId);
 
-      if(!appData) {
-        Logger.mainLogger.error(`Unable to find appData for node ${nodeId}`)
+      if (!appData) {
+        Logger.mainLogger.error(`Unable to find appData for node ${nodeId}`);
         continue;
       }
 
       if (aggregatedAppVersion.has(appData.shardeumVersion)) {
         // Increment the CLI version count that this node is using
-        aggregatedAppVersion.get(appData.shardeumVersion)
+        aggregatedAppVersion
+          .get(appData.shardeumVersion)
           .cliVersions.set(
             appData.operatorCLIVersion,
-            aggregatedAppVersion.get(appData.shardeumVersion)
-              .cliVersions.get(appData.operatorCLIVersion) + 1
+            (aggregatedAppVersion
+              .get(appData.shardeumVersion)
+              .cliVersions.get(appData.operatorCLIVersion)) + 1
           );
 
         // Increment the GUI version count that this node is using
-        aggregatedAppVersion.get(appData.shardeumVersion)
+        aggregatedAppVersion
+          .get(appData.shardeumVersion)
           .guiVersions.set(
             appData.operatorGUIVersion,
-            aggregatedAppVersion.get(appData.shardeumVersion)
-              .guiVersions.get(appData.operatorGUIVersion) + 1
+            (aggregatedAppVersion
+              .get(appData.shardeumVersion)
+              .guiVersions.get(appData.operatorGUIVersion)) + 1
           );
 
         // Increment the total node count for this version
-        aggregatedAppVersion.get(appData.shardeumVersion).nodeCount += 1;
+        aggregatedAppVersion.get(appData.shardeumVersion).activeNodeCount += 1;
       } else {
         aggregatedAppVersion.set(appData.shardeumVersion, {
-          nodeCount: 1,
-          cliVersions: new Map<string, number>([[appData.operatorCLIVersion, 1]]),
-          guiVersions: new Map<string, number>([[appData.operatorGUIVersion, 1]])
+          activeNodeCount: 1,
+          cliVersions: new Map<string, number>([
+            [appData.operatorCLIVersion, 1],
+          ]),
+          guiVersions: new Map<string, number>([
+            [appData.operatorGUIVersion, 1],
+          ]),
+        });
+      }
+    }
+
+    // Iterate over joining nodes
+    for (const nodeId in this.nodes.joining) {
+      const appData = this.joiningAppData.get(nodeId);
+
+      if (!appData) {
+        Logger.mainLogger.error(
+          `Unable to find appData for joining node ${nodeId}`
+        );
+        continue;
+      }
+
+      if (aggregatedAppVersion.has(appData.shardeumVersion)) {
+        // Increment the total node count for this version
+        aggregatedAppVersion.get(appData.shardeumVersion).joiningNodeCount = (aggregatedAppVersion.get(appData.shardeumVersion).joiningNodeCount || 0) + 1;
+
+        // Increment the CLI version count that this node is using
+        aggregatedAppVersion
+          .get(appData.shardeumVersion)
+          .cliVersions.set(
+            appData.operatorCLIVersion,
+            (aggregatedAppVersion
+              .get(appData.shardeumVersion)
+              .cliVersions.get(appData.operatorCLIVersion)) + 1
+          );
+
+        // Increment the GUI version count that this node is using
+        aggregatedAppVersion
+          .get(appData.shardeumVersion)
+          .guiVersions.set(
+            appData.operatorGUIVersion,
+            (aggregatedAppVersion
+              .get(appData.shardeumVersion)
+              .guiVersions.get(appData.operatorGUIVersion)) + 1
+          );
+
+      } else {
+        aggregatedAppVersion.set(appData.shardeumVersion, {
+          joiningNodeCount: 1,
+          cliVersions: new Map<string, number>([
+            [appData.operatorCLIVersion, 1],
+          ]),
+          guiVersions: new Map<string, number>([
+            [appData.operatorGUIVersion, 1],
+          ]),
+        });
+      }
+    }
+
+    // Iterate over syncing nodes
+    for (const nodeId in this.nodes.syncing) {
+      const appData = this.syncAppData.get(nodeId);
+
+      if (!appData) {
+        Logger.mainLogger.error(
+          `Unable to find appData for syncing node ${nodeId}`
+        );
+        continue;
+      }
+
+      if (aggregatedAppVersion.has(appData.shardeumVersion)) {
+        // Increment the total node count for this version
+        aggregatedAppVersion.get(appData.shardeumVersion).syncingNodeCount = (aggregatedAppVersion.get(appData.shardeumVersion).syncingNodeCount || 0) + 1;
+
+        // Increment the CLI version count that this node is using
+        aggregatedAppVersion
+          .get(appData.shardeumVersion)
+          .cliVersions.set(
+            appData.operatorCLIVersion,
+            (aggregatedAppVersion
+              .get(appData.shardeumVersion)
+              .cliVersions.get(appData.operatorCLIVersion)) + 1
+          );
+
+        // Increment the GUI version count that this node is using
+        aggregatedAppVersion
+          .get(appData.shardeumVersion)
+          .guiVersions.set(
+            appData.operatorGUIVersion,
+            (aggregatedAppVersion
+              .get(appData.shardeumVersion)
+              .guiVersions.get(appData.operatorGUIVersion)) + 1
+          );
+
+      } else {
+        aggregatedAppVersion.set(appData.shardeumVersion, {
+          syncingNodeCount: 1,
+          cliVersions: new Map<string, number>([
+            [appData.operatorCLIVersion, 1],
+          ]),
+          guiVersions: new Map<string, number>([
+            [appData.operatorGUIVersion, 1],
+          ]),
         });
       }
     }

@@ -16,6 +16,7 @@ export interface RequestWithBody extends Request {
     data: ActiveReport | undefined;
     nodeIpInfo: NodeIpInfo | undefined;
     [key: string]: {} | undefined;
+    appData?: NodeInfoAppData | undefined;
   };
 }
 
