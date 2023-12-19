@@ -297,6 +297,10 @@ app.get("/summary", async (req, res) => {
       <button onclick="setSortOrder('asc')">Ascending</button>
       <button onclick="setSortOrder('desc')">Descending</button>
     </div>
+    <div>
+      <label for="reloadCheckbox">Auto Reload:</label>
+      <input type="checkbox" id="reloadCheckbox" onchange="toggleReload()" checked>
+    </div>
     cycle: ${cycle && cycle.counter > -1 ? cycle.counter : -1}
       <br />
       <br />
@@ -344,10 +348,32 @@ app.get("/summary", async (req, res) => {
       window.location.replace(url.toString());
     }
 
-    setInterval(() => {
-      console.log('reload')
-      window.location.reload(true)
-    }, 10000)
+    window.addEventListener("load", (event) => {
+      // Enable auto reload on page load
+      enableAutoReload();
+    });
+
+    function enableAutoReload() {
+      window.autoReloadIntervalHandler = setInterval(function() {
+        console.log('Page reloading...');
+        window.location.reload(true);
+      }, 10000); // reload page every 10 seconds
+    }
+
+    function disableAutoReload() {
+      // Stop reloading the page
+      clearInterval(window.autoReloadIntervalHandler);
+    }
+
+    function toggleReload() {
+      if (document.getElementById("reloadCheckbox").checked) {
+        // If checkbox set start reloading the page
+        enableAutoReload();
+      } else {
+        // If checkbox not set stop reloading the page
+        disableAutoReload();
+      }
+    }
   </script> 
 </html>
 `;
