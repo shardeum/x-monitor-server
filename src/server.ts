@@ -240,8 +240,11 @@ app.get("/summary", async (req, res) => {
     const removed = global.node.removedNodes[global.node.counter - 1] || []
     const node = global.node.getRandomNode()
     if (node) {
-      cycleUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/sync-newest-cycle`;
-      configUrl = `http://${node.nodeIpInfo.externalIp}:${node.nodeIpInfo.externalPort}/config`;
+      const externalIp = node.nodeIpInfo.externalIp ? node.nodeIpInfo.externalIp : "NoExternalIp";
+      const externalPort = node.nodeIpInfo.externalPort ? node.nodeIpInfo.externalPort : "NoExternalPort";
+  
+      cycleUrl = `http://${externalIp}:${externalPort}/sync-newest-cycle`;
+      configUrl = `http://${externalIp}:${externalPort}/config`;
       try {
         cycle = await getJSON(cycleUrl);
         cycle = cycle.newestCycle;
@@ -250,44 +253,54 @@ app.get("/summary", async (req, res) => {
       }
     }
 
+    function sortNodes(nodes, sortOrder) {
+      return nodes.sort((a, b) => {
+        return sortOrder === 'asc' ? 
+              `${a.ip}:${a.port}`.localeCompare(`${b.ip}:${b.port}`) : 
+              `${b.ip}:${b.port}`.localeCompare(`${a.ip}:${a.port}`);
+      });
+    }
+
+    function getSortedNodeLinks(nodes, sortOrder) {
+      let nodesArray = nodes.map(node => {
+        const ip = node && node.nodeIpInfo && node.nodeIpInfo.externalIp ? node.nodeIpInfo.externalIp : "NoExternalIp";
+        const port = node && node.nodeIpInfo && node.nodeIpInfo.externalPort ? node.nodeIpInfo.externalPort : "NoExternalPort";
+
+        return {
+          ip: ip,
+          port: port,
+          link: `<a href="log?ip=${ip}&port=${port}" target="_blank">[${ip}:${port}]</a>`
+        };
+      });
+
+      return sortNodes(nodesArray, sortOrder).map(node => node.link);
+    }
+
     const summary = {
       joining: [],
       syncing: [],
       active: [],
     };
 
-    for (const state in summary) {
-      let nodesArray = [];
-      for (const id in global.node.nodes[state]) {
-        const ip = global.node.nodes[state][id].nodeIpInfo.externalIp;
-        const port = global.node.nodes[state][id].nodeIpInfo.externalPort;
-        const link = `<a href="log?ip=${ip}&port=${port}" target="_blank">[${ip}:${port}]</a>`;
+    Object.keys(global.node.nodes).forEach(state => {
+      summary[state] = getSortedNodeLinks(Object.values(global.node.nodes[state]), sortOrder);
+    });
 
-        let index = nodesArray.findIndex((existingNode) =>
-          sortOrder === 'asc' ? `${existingNode.ip}:${existingNode.port}`.localeCompare(`${ip}:${port}`) > 0 : `${existingNode.ip}:${existingNode.port}`.localeCompare(`${ip}:${port}`) < 0
-        );
+    let removedNodesArray = removed.map(node => {
+      const ip = node.ip ? node.ip : "NoExternalIp";
+      const port = node.port ? node.port : "NoExternalPort";
 
-        if (index === -1) {
-          // If no suitable index was found, add the node at the end of the array
-          nodesArray.push({ ip, port, link });
-        } else {
-          // Otherwise, insert the node at the correct index to maintain the sorted order
-          nodesArray.splice(index, 0, { ip, port, link });
+      return {
+        nodeIpInfo:{
+          externalIp: ip,
+          externalPort: port,
+          link: `<a href="log?ip=${ip}&port=${port}" target="_blank">[${ip}:${port}]</a>`
         }
+      };
+    });
 
-      }
+    let removedNodeLinks = getSortedNodeLinks(removedNodesArray, sortOrder);
 
-      // Push sorted links to summary
-      nodesArray.forEach(node => summary[state].push(node.link));
-    }
-
-    let removedNodesArray = removed.map(node => ({
-      ip: node.ip,
-      port: node.port,
-      link: `<a href="log?ip=${node.ip}&port=${node.port}" target="_blank">[${node.ip}:${node.port}]</a>`
-    }));
-    removedNodesArray.sort((a, b) => sortOrder === 'asc' ? `${a.ip}:${a.port}`.localeCompare(`${b.ip}:${b.port}`) : `${b.ip}:${b.port}`.localeCompare(`${a.ip}:${a.port}`));
-    let removedNodeLinks = removedNodesArray.map(node => node.link);
 
     const page = `<!DOCTYPE html>
 <html>
