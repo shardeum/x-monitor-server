@@ -283,3 +283,23 @@ export class MarkerCount {
     this.heap.sort((a, b) => b[1] - a[1]);
   }
 }
+export function compareIPs(ip1, ip2, type = 'asc') {
+  // Split the IP strings into arrays of octets
+  const octets1 = ip1.split('.');
+  const octets2 = ip2.split('.');
+
+  // Compare each octet successively
+  for (let i = 0; i < 4; i++) {
+    const octet1 = parseInt(octets1[i], 10);
+    const octet2 = parseInt(octets2[i], 10);
+
+    if (octet1 < octet2) {
+      return type === 'asc' ? -1 : 1;
+    } else if (octet1 > octet2) {
+      return type === 'asc' ? 1 : -1;
+    }
+  }
+
+  // If all octets are equal, return 0
+  return 0;
+}

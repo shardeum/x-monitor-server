@@ -54,6 +54,7 @@ import logsConfig from './config/monitor-log';
 import {mainLogger} from "./class/logger";
 import { NodeList } from './interface/interface';
 import { setupArchiverDiscovery } from '@shardus/archiver-discovery';
+import { compareIPs } from './utils';
 
 const logDir = `monitor-logs`;
 const baseDir = ".";
@@ -255,9 +256,29 @@ app.get("/summary", async (req, res) => {
 
     function sortNodes(nodes, sortOrder) {
       return nodes.sort((a, b) => {
-        return sortOrder === 'asc' ? 
-              `${a.ip}:${a.port}`.localeCompare(`${b.ip}:${b.port}`) : 
-              `${b.ip}:${b.port}`.localeCompare(`${a.ip}:${a.port}`);
+         // Determine availability status
+        const isAFullyUnavailable = a.ip === "NoExternalIp" && a.port === "NoExternalPort";
+        const isBFullyUnavailable = b.ip === "NoExternalIp" && b.port === "NoExternalPort";
+        const isAPartiallyUnavailable = !isAFullyUnavailable && (a.ip === "NoExternalIp" || a.port === "NoExternalPort");
+        const isBPartiallyUnavailable = !isBFullyUnavailable && (b.ip === "NoExternalIp" || b.port === "NoExternalPort");
+
+        // Fully unavailable nodes sorted last
+        if (isAFullyUnavailable && !isBFullyUnavailable) return 1;
+        if (!isAFullyUnavailable && isBFullyUnavailable) return -1;
+
+        // Partially unavailable nodes sorted next-to-last
+        if (isAPartiallyUnavailable && !isBPartiallyUnavailable) return 1;
+        if (!isAPartiallyUnavailable && isBPartiallyUnavailable) return -1;
+
+        // If both nodes have the same availability, proceed with regular comparison
+        const ipComparison = compareIPs(a.ip, b.ip, sortOrder);
+        if (ipComparison === 0) {
+          // If IPs are equal, compare ports as numbers
+          const portA = parseInt(a.port, 10);
+          const portB = parseInt(b.port, 10);
+          return sortOrder === 'asc' ? portA - portB : portB - portA;
+        }
+        return ipComparison;
       });
     }
 
@@ -275,6 +296,7 @@ app.get("/summary", async (req, res) => {
 
       return sortNodes(nodesArray, sortOrder).map(node => node.link);
     }
+
 
     const summary = {
       joining: [],
