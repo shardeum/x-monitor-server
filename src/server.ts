@@ -325,93 +325,201 @@ app.get("/summary", async (req, res) => {
 
 
     const page = `<!DOCTYPE html>
-<html>
-  <body>
-    <div>
-      <label title="Sort by IP and Port">Sort:</label>
-      <button onclick="setSortOrder('asc')">Ascending</button>
-      <button onclick="setSortOrder('desc')">Descending</button>
-    </div>
-    <div>
-      <label for="reloadCheckbox">Auto Reload:</label>
-      <input type="checkbox" id="reloadCheckbox" onchange="toggleReload()" checked>
-    </div>
-    cycle: ${cycle && cycle.counter > -1 ? cycle.counter : -1}
-      <br />
-      <br />
-    joining: ${summary.joining.length}
-      <p>
-        <code>
-          ${summary.joining.join(" ")}
-        </code>
-      </p>
-    syncing: ${summary.syncing.length}
-      <p>
-        <code>
-          ${summary.syncing.join(" ")}
-        </code>
-      </p>
-    active: ${summary.active.length}
-      <p>
-        <code>
-          ${summary.active.join(" ")}
-        </code>
-      </p>
-    removed: ${removed.length}
-      <p>
-        <code>
-          ${removedNodeLinks.join(" ")}
-        </code>
-      </p>
+      <html>
+        <head>
+          <style>
+            .collapsible {
+              cursor: pointer;
+              padding: 10px;
+              width: 100%;
+              border: none;
+              text-align: left;
+              outline: none;
+              font-size: 15px;
+              background-color: #ffffff;
+            }
 
-    <br />
-    cycleRecord: <a href="${cycleUrl}" target="_blank">${cycleUrl}</a>
-    <br /><br />
-    config: <a href="${configUrl}" target="_blank">${configUrl}</a>
-    <br /><br />
-    <p>
-      <pre>
-        ${cycle ? JSON.stringify(cycle, null, 2) : "Cannot get cycle from nodes"}
-      </pre>
-    </p>
-  </body>
+            .active, .collapsible:hover {
+              background-color: #f1f1f1;
+            }
 
-  <script>
-    function setSortOrder(order) {
-      let url = new URL(window.location.href);
-      url.searchParams.set('sortOrder', order);
-      window.location.replace(url.toString());
-    }
+            .content {
+              padding: 0 18px;
+              display: none;
+              overflow: hidden;
+              background-color: #f1f1f1;
+              margin-bottom: 2px;
+            }
+          </style>
+        </head>
+        <body>
+          <div id="sortSection">
+            <label title="Sort by IP and Port">Sort:</label>
+            <button onclick="setSortOrder('asc')">Ascending</button>
+            <button onclick="setSortOrder('desc')">Descending</button>
+          </div>
+          <div id="reloadSection">
+            <label for="reloadCheckbox">Auto Reload:</label>
+            <input type="checkbox" id="reloadCheckbox" onchange="toggleReload()" checked>
+          </div>
 
-    window.addEventListener("load", (event) => {
-      // Enable auto reload on page load
-      enableAutoReload();
-    });
+          <div class="collapsible">Cycle Information</div>
+          <div class="content">
+            <p id="cycleCounter">cycle: ${cycle && cycle.counter > -1 ? cycle.counter : -1}</p>
+          </div>
 
-    function enableAutoReload() {
-      window.autoReloadIntervalHandler = setInterval(function() {
-        console.log('Page reloading...');
-        window.location.reload(true);
-      }, 10000); // reload page every 10 seconds
-    }
+          <div class="collapsible">
+            <div>
+              Joining Nodes 
+              <span class="activeCount">(${summary.joining.length})
+              <button onclick="downloadNodeData('joining')">Download</button>
+              </span>
+            </div>
+          </div>
+          <div class="content">
+              <code id="joiningNodes">
+                ${summary.joining.join(" ")}
+              </code>
+          </div>
 
-    function disableAutoReload() {
-      // Stop reloading the page
-      clearInterval(window.autoReloadIntervalHandler);
-    }
+          <div class="collapsible">
+            <div>
+              Syncing Nodes 
+              <span class="activeCount">(${summary.syncing.length})
+              <button onclick="downloadNodeData('syncing')">Download</button>
+              </span>
+            </div>
+          </div>
+          <div class="content">
+              <code id="syncingNodes">
+                ${summary.syncing.join(" ")}
+              </code>
+            </p>
+          </div>
 
-    function toggleReload() {
-      if (document.getElementById("reloadCheckbox").checked) {
-        // If checkbox set start reloading the page
-        enableAutoReload();
-      } else {
-        // If checkbox not set stop reloading the page
-        disableAutoReload();
-      }
-    }
-  </script> 
-</html>
-`;
+
+          <div class="collapsible">
+            <div>
+              Active Nodes 
+              <span class="activeCount">(${summary.active.length})
+              </span>
+              <button onclick="downloadNodeData('active')">Download</button>
+            </div>
+
+          </div>
+          <div class="content">
+              <code id="activeNodes">
+                ${summary.active.join(" ")}
+              </code>
+            </p>
+          </div>
+
+          <div class="collapsible">
+            <div>
+              Removed Nodes 
+              <span class="activeCount">(${removedNodeLinks.length})
+              </span>
+            </div>
+          </div>
+           <div class="content">
+            <p>
+              <code id="removedNodes">
+                ${removedNodeLinks.join(" ")}
+              </code>
+            </p>
+          </div>
+
+          <div class="collapsible">Cycle Record</div>
+          <div class="content">
+            <p>cycleRecord: <a href="${cycleUrl}" target="_blank" id="cycleRecordLink">${cycleUrl}</a></p>
+          </div>
+
+          <div class="collapsible">Configuration</div>
+          <div class="content">
+            <p>config: <a href="${configUrl}" target="_blank" id="configLink">${configUrl}</a></p>
+          </div>
+
+          <div class="collapsible">Cycle Details</div>
+          <div class="content">
+            <pre id="cycleDetails">
+              ${cycle ? JSON.stringify(cycle, null, 2) : "Cannot get cycle from nodes"}
+            </pre>
+          </div>
+
+          <script>
+            function setSortOrder(order) {
+              let url = new URL(window.location.href);
+              url.searchParams.set('sortOrder', order);
+              window.location.replace(url.toString());
+            }
+
+            window.addEventListener("load", (event) => {
+              enableAutoReload();
+              initializeCollapsibles();
+            });
+
+            function enableAutoReload() {
+              window.autoReloadIntervalHandler = setInterval(function() {
+                console.log('Page reloading...');
+                window.location.reload(true);
+              }, 10000); // reload page every 10 seconds
+            }
+
+            function disableAutoReload() {
+              clearInterval(window.autoReloadIntervalHandler);
+            }
+
+            function toggleReload() {
+              if (document.getElementById("reloadCheckbox").checked) {
+                enableAutoReload();
+              } else {
+                disableAutoReload();
+              }
+            }
+
+            function initializeCollapsibles() {
+                var coll = document.getElementsByClassName("collapsible");
+                for (let i = 0; i < coll.length; i++) {
+                  coll[i].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    var content = this.nextElementSibling;
+                    var isVisible = content.style.display === "block";
+                    content.style.display = isVisible ? "none" : "block";
+                    localStorage.setItem('collapsible_' + i, !isVisible);
+                  });
+
+                  if (localStorage.getItem('collapsible_' + i) === 'true') {
+                    coll[i].classList.add("active");
+                    coll[i].nextElementSibling.style.display = "block";
+                  }
+                }
+              }
+
+            function downloadData(filename, text) {
+              var element = document.createElement('a');
+              element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+              element.setAttribute('download', filename);
+
+              element.style.display = 'none';
+              document.body.appendChild(element);
+
+              element.click();
+
+              document.body.removeChild(element);
+            }
+
+            function downloadNodeData(section) {
+              let nodeLinks = document.getElementById(section + 'Nodes').getElementsByTagName('a');
+              let nodeData = {
+                nodes: Array.from(nodeLinks).map(link => link.textContent.replace('[', '').replace(']', ''))
+              }
+              let dataStr = JSON.stringify(nodeData);
+              downloadData(section + '_nodes.txt', dataStr);
+            }
+          </script> 
+        </body>
+      </html>
+      `;
 
     res.setHeader("Content-Type", "text/html");
     res.send(page);
