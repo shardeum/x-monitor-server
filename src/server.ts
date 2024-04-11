@@ -302,6 +302,7 @@ app.get("/summary", async (req, res) => {
       joining: [],
       syncing: [],
       active: [],
+      standby: [],
     };
 
     Object.keys(global.node.nodes).forEach(state => {
@@ -397,6 +398,20 @@ app.get("/summary", async (req, res) => {
             </p>
           </div>
 
+          <div class="collapsible">
+            <div>
+              Standby Nodes 
+              <span class="activeCount">(${summary.standby.length})
+              <button onclick="downloadNodeData('standby')">Download</button>
+              </span>
+            </div>
+          </div>
+          <div class="content">
+              <code id="standbyNodes">
+                ${summary.standby.join(" ")}
+              </code>
+            </p>
+          </div>
 
           <div class="collapsible">
             <div>

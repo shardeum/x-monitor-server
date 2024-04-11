@@ -35,6 +35,9 @@ export interface NodeList {
   active: {
     [key: string]: ActiveReport;
   };
+  standby: {
+    [key: string]: StandbyReport;
+  };
 }
 
 export interface Report {
@@ -54,6 +57,10 @@ export interface NodeIpInfo {
   externalPort: number;
   internalIp: string;
   internalPort: number;
+}
+
+export interface StandbyReport {
+  nodeIpInfo: NodeIpInfo;
 }
 
 export interface JoinReport {
