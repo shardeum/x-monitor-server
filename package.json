@@ -42,7 +42,7 @@
   "dependencies": {
     "@shardus/archiver-discovery": "1.1.0",
     "@shardus/monitor-client": "2.5.9",
-    "axios": "0.24.0",
+    "axios": "0.28.0",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "1.18.3",
     "compression": "1.7.3",
@@ -51,7 +51,7 @@
     "dotenv": "6.2.0",
     "ejs": "3.1.7",
     "eslint": "8.43.0",
-    "express": "4.16.4",
+    "express": "4.19.2",
     "helmet": "3.21.1",
     "jwt-simple": "0.5.6",
     "log4js": "6.4.0",
