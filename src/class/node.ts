@@ -824,12 +824,13 @@ export class Node {
       this.logSummaryToConsole()
     } catch(e) {
       Logger.mainLogger.error(`Error in updateAvgAndMaxTps: ${e.message}`);
+    }finally{
+      setTimeout(() => {
+        this.updateAvgAndMaxTps();
+      }, this.reportInterval);
+      ProfilerModule.profilerInstance.profileSectionEnd('updateAvgAndMaxTps');
     }
 
-    setTimeout(() => {
-      this.updateAvgAndMaxTps();
-    }, this.reportInterval);
-    ProfilerModule.profilerInstance.profileSectionEnd('updateAvgAndMaxTps');
   }
 
   logSummaryToConsole() {
@@ -842,7 +843,7 @@ export class Node {
 
       ProfilerModule.profilerInstance.profileSectionStart('updateRejectedTps');
       if (Object.keys(this.nodes.active).length === 0) {
-        this.rejectedTps = 0;
+        return;
       }
 
       const rejectedTps = Math.round(
@@ -1309,6 +1310,5 @@ export class Node {
     this.avgTps = 0;
     this.maxTps = 0;
     this.lastTotalProcessed = 0;
-    this.isTimerStarted = false;
   }
 }
