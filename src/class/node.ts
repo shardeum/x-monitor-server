@@ -107,7 +107,7 @@ export class Node {
     this.queryArchiverInterval = setInterval(this.queryArchiverRetries.bind(this), this.queryArchiverIntervalTime)
 
     setInterval(this.summarizeTxCoverage.bind(this), 10000);
-    setInterval(this.updateRejectedTps.bind(this), this.reportInterval);
+    // setInterval(this.updateRejectedTps.bind(this), this.reportInterval);
     setInterval(this.updateStandbyNodes.bind(this), 1000 * 60 * 1); // Update standby nodes every cycle
     setInterval(this.checkStandbyNodes.bind(this), 1000 * 60 * 5); // Check standby nodes every 5 minutes
     setInterval(this.checkSyncingNode.bind(this), 1000 * 60 * 1); // Check syncing nodes every cycle
@@ -745,6 +745,7 @@ export class Node {
     if (!this.isTimerStarted) {
       setTimeout(() => {
         this.updateAvgAndMaxTps();
+        this.updateRejectedTps();
       }, this.reportInterval);
       this.isTimerStarted = true;
     }
@@ -823,12 +824,13 @@ export class Node {
       this.logSummaryToConsole()
     } catch(e) {
       Logger.mainLogger.error(`Error in updateAvgAndMaxTps: ${e.message}`);
+    }finally{
+      setTimeout(() => {
+        this.updateAvgAndMaxTps();
+      }, this.reportInterval);
+      ProfilerModule.profilerInstance.profileSectionEnd('updateAvgAndMaxTps');
     }
 
-    setTimeout(() => {
-      this.updateAvgAndMaxTps();
-    }, this.reportInterval);
-    ProfilerModule.profilerInstance.profileSectionEnd('updateAvgAndMaxTps');
   }
 
   logSummaryToConsole() {
@@ -837,20 +839,26 @@ export class Node {
   }
 
   updateRejectedTps() {
-    ProfilerModule.profilerInstance.profileSectionStart('updateRejectedTps');
-    if (Object.keys(this.nodes.active).length === 0) {
-      this.rejectedTps = 0;
+    try{
+
+      ProfilerModule.profilerInstance.profileSectionStart('updateRejectedTps');
+      if (Object.keys(this.nodes.active).length === 0) {
+        return;
+      }
+
+      const rejectedTps = Math.round(
+        (this.totalTxRejected - this.lastTotalTxRejected) /
+          (this.reportInterval / 1000)
+      );
+      this.rejectedTps = rejectedTps;
+
+      this.lastTotalTxRejected = this.totalTxRejected;
+    }finally{
+      setTimeout(() => {
+        this.updateRejectedTps();
+      }, this.reportInterval);
+      ProfilerModule.profilerInstance.profileSectionEnd('updateRejectedTps');
     }
-
-    const rejectedTps = Math.round(
-      (this.totalTxRejected - this.lastTotalTxRejected) /
-        (this.reportInterval / 1000)
-    );
-    this.rejectedTps = rejectedTps;
-
-    this.lastTotalTxRejected = this.totalTxRejected;
-
-    ProfilerModule.profilerInstance.profileSectionEnd('updateRejectedTps');
   }
 
   checkDeadOrAlive() {
