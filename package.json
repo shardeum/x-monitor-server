@@ -1,6 +1,6 @@
 {
   "name": "@shardus/monitor-server",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "Monitor server for the Shardus Enterprise server.",
   "engines": {
     "node": "18.16.1"
