@@ -245,7 +245,7 @@ export class Node {
           this.syncAppData.delete(nodeId);
         } else if (res.status === 200) {
           const nodeInfo = res.data.nodeInfo;
-          if (nodeInfo == null || nodeInfo.status !== 'syncing') {
+          if (nodeInfo == null || nodeInfo.status !== 'syncing' || nodeInfo.status !== 'selected' || nodeInfo.status !== 'ready') {
             Logger.mainLogger.info(`Syncing node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is no longer syncing`)
             delete this.nodes.syncing[nodeId];
             delete this.syncAppData[nodeId];
@@ -507,6 +507,9 @@ export class Node {
         nodeIpInfo,
         timestamp: Date.now(),
       };
+      if(this.nodes.standby[publicKey]) {
+        delete this.nodes.standby[publicKey];
+      }
       this.syncAppData.set(nodeId, appData);
       if (!this.history[nodeId]) this.history[nodeId] = {};
       this.history[nodeId].joined = Date.now();
