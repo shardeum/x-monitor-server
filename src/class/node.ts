@@ -507,7 +507,7 @@ export class Node {
         nodeIpInfo,
         timestamp: Date.now(),
       };
-      if(this.nodes.standby[publicKey]) {
+      if (this.nodes.standby[publicKey]) {
         delete this.nodes.standby[publicKey];
       }
       this.syncAppData.set(nodeId, appData);
