@@ -245,7 +245,7 @@ export class Node {
           this.syncAppData.delete(nodeId);
         } else if (res.status === 200) {
           const nodeInfo = res.data.nodeInfo;
-          if (nodeInfo == null || nodeInfo.status !== 'syncing' || nodeInfo.status !== 'selected' || nodeInfo.status !== 'ready') {
+          if (nodeInfo == null || !['syncing', 'selected', 'ready'].includes(nodeInfo.status)) {
             Logger.mainLogger.info(`Syncing node ${nodeIpInfo.externalIp}:${nodeIpInfo.externalPort} is no longer syncing`)
             delete this.nodes.syncing[nodeId];
             delete this.syncAppData[nodeId];
