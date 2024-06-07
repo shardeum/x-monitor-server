@@ -1,6 +1,6 @@
 {
   "name": "@shardus/monitor-server",
-  "version": "2.6.1",
+  "version": "2.6.3",
   "description": "Monitor server for the Shardus Enterprise server.",
   "engines": {
     "node": "18.16.1"
@@ -13,7 +13,7 @@
     "archiverConfig.json"
   ],
   "scripts": {
-    "release": "np --any-branch --no-cleanup --no-tests --no-yarn",
+    "release": "npm run prepare && np --any-branch --no-cleanup --no-tests --no-yarn --branch dev",
     "start": "node .",
     "update-docker": "sudo docker build -t registry.gitlab.com/shardus/monitor-server . && sudo docker push registry.gitlab.com/shardus/monitor-server",
     "check": "gts check",
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@shardus/archiver-discovery": "1.1.0",
-    "@shardus/monitor-client": "2.5.9",
+    "@shardus/monitor-client": "2.5.10",
     "axios": "0.24.0",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "1.18.3",
