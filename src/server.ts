@@ -214,6 +214,10 @@ app.get("/large-network", (req, res) => {
   res.render("large-network.html");
 });
 
+app.get("/sync-details", (req, res) => {
+  res.render("sync-details.html");
+});
+
 app.get("/sync", (req, res) => {
   res.render("sync.html");
 });
@@ -243,7 +247,7 @@ app.get("/summary", async (req, res) => {
     if (node) {
       const externalIp = node.nodeIpInfo.externalIp ? node.nodeIpInfo.externalIp : "NoExternalIp";
       const externalPort = node.nodeIpInfo.externalPort ? node.nodeIpInfo.externalPort : "NoExternalPort";
-  
+
       cycleUrl = `http://${externalIp}:${externalPort}/sync-newest-cycle`;
       configUrl = `http://${externalIp}:${externalPort}/config`;
       try {
@@ -371,7 +375,7 @@ app.get("/summary", async (req, res) => {
 
           <div class="collapsible">
             <div>
-              Joining Nodes 
+              Joining Nodes
               <span class="activeCount">(${summary.joining.length})
               <button onclick="downloadNodeData('joining')">Download</button>
               </span>
@@ -385,7 +389,7 @@ app.get("/summary", async (req, res) => {
 
           <div class="collapsible">
             <div>
-              Syncing Nodes 
+              Syncing Nodes
               <span class="activeCount">(${summary.syncing.length})
               <button onclick="downloadNodeData('syncing')">Download</button>
               </span>
@@ -400,7 +404,7 @@ app.get("/summary", async (req, res) => {
 
           <div class="collapsible">
             <div>
-              Standby Nodes 
+              Standby Nodes
               <span class="activeCount">(${summary.standby.length})
               <button onclick="downloadNodeData('standby')">Download</button>
               </span>
@@ -415,7 +419,7 @@ app.get("/summary", async (req, res) => {
 
           <div class="collapsible">
             <div>
-              Active Nodes 
+              Active Nodes
               <span class="activeCount">(${summary.active.length})
               </span>
               <button onclick="downloadNodeData('active')">Download</button>
@@ -431,7 +435,7 @@ app.get("/summary", async (req, res) => {
 
           <div class="collapsible">
             <div>
-              Removed Nodes 
+              Removed Nodes
               <span class="activeCount">(${removedNodeLinks.length})
               </span>
             </div>
@@ -531,7 +535,7 @@ app.get("/summary", async (req, res) => {
               let dataStr = JSON.stringify(nodeData);
               downloadData(section + '_nodes.txt', dataStr);
             }
-          </script> 
+          </script>
         </body>
       </html>
       `;
