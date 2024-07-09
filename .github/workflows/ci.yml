@@ -22,11 +22,6 @@ on:
         options:
           - dev
           - main
-
-permissions:
-  issues: write
-  pull-requests: write
-
 jobs:
   echo-inputs:
     name: Repo Workflow Debugging
@@ -43,6 +38,10 @@ jobs:
           echo "*** End - Check inputs in repo workflow ***"
   ci-dev:
     if: ${{ github.event.inputs.workflowBranch == 'dev' }}
+    permissions:
+      pull-requests: write
+      contents: read
+      issues: write
     uses: shardeum/github-automation/.github/workflows/reusable-node-ci.yml@dev
     with:
       node-version: ${{ vars.NODE_VERSION }}
@@ -54,6 +53,10 @@ jobs:
 
   ci-main:
     if: ${{ github.event.inputs.workflowBranch == 'main' || !github.event.inputs.workflowBranch }}
+    permissions:
+      pull-requests: write
+      issues: write
+      contents: read
     uses: shardeum/github-automation/.github/workflows/reusable-node-ci.yml@main
     with:
       node-version: ${{ vars.NODE_VERSION }}
