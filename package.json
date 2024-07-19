@@ -23,9 +23,10 @@
     "prepare": "npm run compile",
     "pretest": "npm run compile",
     "posttest": "npm run check",
-    "lint": "eslint './src/**/*.ts'",
-    "lint-windows": "eslint ./src/**/*.ts",
-    "format-check": "prettier --check './src/**/*.ts'"
+    "lint": "eslint \"./src/**/*.ts\"",
+    "format-check": "prettier --check './src/**/*.ts'",
+    "format-fix": "prettier --write './src/**/*.ts'",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
