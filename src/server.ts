@@ -214,6 +214,10 @@ app.get("/large-network", (req, res) => {
   res.render("large-network.html");
 });
 
+app.get("/node-loads", (req, res) => {
+  res.render("node-loads.html");
+});
+
 app.get("/sync-details", (req, res) => {
   res.render("sync-details.html");
 });
