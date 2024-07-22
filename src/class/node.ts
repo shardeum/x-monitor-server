@@ -60,6 +60,7 @@ export class Node {
   joiningAppData: Map<string, NodeInfoAppData>; // Map nodeId to appData
   syncAppData: Map<string, NodeInfoAppData>; // Map nodeId to appData
   networkId: string; // Network ID to detect bad heartbeats
+  mode: 'forming' | 'processing' | 'safety' | 'recovery' | 'restart' | 'restore' | 'shutdown'
   cycleRecordStart: number;
   cycleRecordCounter: number;
   cycleDuration: number;
@@ -137,7 +138,7 @@ export class Node {
           .catch(err => {
             Logger.mainLogger.warn(`Could not get archiver cycle record`)
             Logger.mainLogger.warn(err)
-            if(--retiresLeft === 0) {
+            if (--retiresLeft === 0) {
               clearInterval(retryTimer)
               reject()
             }
@@ -183,6 +184,7 @@ export class Node {
     this.cycleRecordCounter = cycleRecord.cycleInfo[0].counter
     this.cycleDuration = cycleRecord.cycleInfo[0].duration
     this.networkId = cycleRecord.cycleInfo[0].networkId
+    this.mode = cycleRecord.cycleInfo[0].mode
     Logger.mainLogger.info(
       `Archiver cycle record created with start: 
       ${this.cycleRecordStart}, counter: ${this.cycleRecordCounter}, 
@@ -518,7 +520,7 @@ export class Node {
         nodeId,
       };
       this.checkCrashedBefore(this.history[nodeId].data);
-      if (this.nodes.joining[publicKey])  { 
+      if (this.nodes.joining[publicKey])  {
         delete this.nodes.joining[publicKey];
         delete this.joiningAppData[publicKey];
       }
@@ -1169,6 +1171,7 @@ export class Node {
           joining: this.nodes.joining,
           standby: this.nodes.standby,
         },
+        mode: this.mode,
         totalInjected: this.totalTxInjected,
         totalRejected: this.totalTxRejected,
         totalExpired: this.totalTxExpired,
@@ -1182,6 +1185,7 @@ export class Node {
       ProfilerModule.profilerInstance.profileSectionEnd('GET_report');
       return {
         nodes: this.nodes,
+        mode: this.mode,
         totalInjected: this.totalTxInjected,
         totalRejected: this.totalTxRejected,
         totalExpired: this.totalTxExpired,

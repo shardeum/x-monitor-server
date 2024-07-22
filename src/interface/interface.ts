@@ -42,6 +42,7 @@ export interface NodeList {
 
 export interface Report {
   nodes: NodeList;
+  mode: string;
   totalInjected: number;
   totalRejected: number;
   totalExpired: number;
