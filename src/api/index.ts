@@ -73,5 +73,10 @@ router.post(
   Middleware.fieldExistance(['nodeId', 'syncStatement']),
   Controller.syncReport
 );
+router.post(
+  '/notify-action-started',
+  [Middleware.fieldExistance(['action']), requireAuthInProduction],
+  Controller.notifyActionStarted
+)
 
 module.exports = router;

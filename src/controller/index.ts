@@ -18,6 +18,7 @@ const countedEvents = require('./countedEvents');
 const invalidIPs = require('./invalidIPs');
 const appVersions = require('./appVersions');
 const version = require('./version');
+import {notifyActionStarted} from './notifyActionStarted';
 
 export const Controller = {
   joining,
@@ -40,4 +41,5 @@ export const Controller = {
   invalidIPs,
   appVersions,
   version,
+  notifyActionStarted
 };
