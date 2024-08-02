@@ -55,6 +55,7 @@ import {mainLogger} from "./class/logger";
 import { NodeList } from './interface/interface';
 import { setupArchiverDiscovery } from '@shardus/archiver-discovery';
 import { compareIPs } from './utils';
+import { healthCheckRouter } from './routes/healthCheck';
 
 const logDir = `monitor-logs`;
 const baseDir = ".";
@@ -182,6 +183,8 @@ global.User.create({
   username: CONFIG.username,
   password: CONFIG.password
 })
+
+app.use("/", healthCheckRouter)
 
 app.get("/", (req, res) => {
   const numActiveNodes = node.getActiveList().length;
