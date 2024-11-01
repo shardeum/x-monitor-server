@@ -53,7 +53,7 @@ console.log("Client directory", clientDirectory)
 import logsConfig from './config/monitor-log';
 import {mainLogger} from "./class/logger";
 import { NodeList } from './interface/interface';
-import { setupArchiverDiscovery } from '@shardus/archiver-discovery';
+import { setupArchiverDiscovery } from '@shardeum-foundation/archiver-discovery';
 import { compareIPs } from './utils';
 import { healthCheckRouter } from './routes/healthCheck';
 
