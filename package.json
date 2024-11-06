@@ -1,5 +1,5 @@
 {
-  "name": "@shardeum-foundation/monitor-server",
+  "name": "@shardus/monitor-server",
   "version": "2.8.5",
   "description": "Monitor server for the Shardus Enterprise server.",
   "engines": {
@@ -30,7 +30,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/shardeum/x-monitor-server.git"
+    "url": "https://gitlab.com/shardus/monitor-server.git"
   },
   "publishConfig": {
     "access": "public"
@@ -41,8 +41,8 @@
     "monitor-server": "build/src/server.js"
   },
   "dependencies": {
-    "@shardeum-foundation/archiver-discovery": "1.1.0",
-    "@shardeum-foundation/monitor-client": "2.8.3",
+    "@shardus/archiver-discovery": "1.1.0",
+    "@shardus/monitor-client": "2.8.3",
     "axios": "0.24.0",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "1.18.3",
