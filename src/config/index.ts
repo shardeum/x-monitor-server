@@ -11,9 +11,9 @@ let config = {
   allowBogon: process.env.NODE_ENV?.toLowerCase() === 'debug' ? true : false,
   removeCrashedNode: true,
   nodeCrashTimeout: 1000 * 60 * 2, // 2 min
-  secret: process.env.SECRET,
-  username: process.env.NAME,
-  password: process.env.PASSWORD,
+  secret: process.env.MON_SECRET || 'Decentralization for everyone',
+  username: process.env.NAME || 'admin',
+  password: process.env.PASSWORD || 'password',
   restoreFromBackup: false,
   backup: {
     enabled: true,
@@ -25,6 +25,6 @@ let config = {
 
 // should NOT log the secret or password
 const { secret, password, ...safeConfig } = config;
-console.log('monitor config', config)
+console.log('monitor config', safeConfig)
 
 export default config
