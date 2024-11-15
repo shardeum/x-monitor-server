@@ -33,7 +33,7 @@ import Logger = require("./class/logger");
 const app = express();
 
 const logDirectory = path.join(__dirname, "req-log");
-const clientModule = require.resolve("@shardus/monitor-client");
+const clientModule = require.resolve("@shardeum-foundation/monitor-client");
 const clientDirectory = path.dirname(clientModule);
 const viewDirectory = path.join(clientDirectory + "/views");
 const staticDirectory = path.resolve(clientDirectory + "/public");

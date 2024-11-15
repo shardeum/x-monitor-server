@@ -8,7 +8,6 @@ const FieldExistance =
     });
     if (missing) {
       let error = new Error(`${_field} is required`);
-      error.message = "400";
       return next(error);
     }
     next();
