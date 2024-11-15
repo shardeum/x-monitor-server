@@ -118,6 +118,7 @@ export interface ActiveReport {
   shardusVersion: string;
   countedEvents: CountedEvent[];
   appData: NodeInfoAppData;
+  memory: MemoryInfo;
 }
 
 export type CountedEvent = {
@@ -161,4 +162,13 @@ export type NodeInfoAppData = {
 export interface PartitionInfo {
   i: number;
   h: string;
+}
+
+export interface MemoryInfo {
+  timestamp: number;
+  rss: number;
+  heapTotal: number;
+  heapUsed: number;
+  external: number;
+  arrayBuffers: number;
 }
